@@ -91,9 +91,10 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
         y=0.02, x=0.5, fontsize=8, fontstyle='italic', color='gray'
     )
     buf = BytesIO()
-    fig.savefig(buf, format="png", bbox_inches='tight')
+    fig.savefig(buf, format="png", bbox_inches='tight', dpi=300)
     buf.seek(0)
     img_str = base64.b64encode(buf.read()).decode("utf-8")
+    buf.close()
     img_html = f'<img src="data:image/png;base64,{img_str}" style="display: block; margin-left: auto; margin-right: auto; width: 750px;"/>'
     st.markdown(img_html, unsafe_allow_html=True)
 
@@ -133,7 +134,7 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
 
     team_data = passing_networks_data[passing_networks_data['team_name'] == team]
     if not team_data.empty:
-        max_round = passing_networks_data['round'].max()
+        max_round = matches_data['round'].max()
         create_goal_network_plot(team_data, team, league_display, season_display, max_round)
     else:
         st.error("Seçilen takım için uygun veri bulunamadı.")

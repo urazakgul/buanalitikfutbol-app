@@ -43,3 +43,14 @@ team_list = [
     "Sivasspor",
     "Trabzonspor"
 ]
+
+change_situations = {
+    'assisted':'Asiste Edilen',
+    'corner':'Korner Sonrası',
+    'regular':'Akan Oyundan',
+    'set-piece':'Duran Toplardan',
+    'fast-break':'Hızlı Hücum Sırasında',
+    'free-kick':'Serbest Vuruştan',
+    'penalty':'Penaltıdan',
+    'throw-in-set-piece':'Taç Atışından Sonra'
+}
