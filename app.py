@@ -29,7 +29,7 @@ def get_user_selection(include_situation_type=True):
 
     situation_type = None
     if include_situation_type:
-        situation_type_display = st.sidebar.selectbox("Şut Tipini Seçin:", ["Hepsi"] + list(change_situations.values()))
+        situation_type_display = st.sidebar.selectbox("Şut Tipi Seçin:", ["Hepsi"] + list(change_situations.values()))
         situation_type = situation_type_display if situation_type_display != "Hepsi" else None
 
     return league, season, team, league_display, season_display, situation_type
