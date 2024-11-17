@@ -80,11 +80,13 @@ def run_app():
                 </p>
             """, unsafe_allow_html=True)
         elif section == "Gol Ağı":
-            league, season, team, league_display, season_display, _ = get_user_selection(include_situation_type=False)
-            goal_path_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display)
+            with st.spinner("İçerik hazırlanıyor..."):
+                league, season, team, league_display, season_display, _ = get_user_selection(include_situation_type=False)
+                goal_path_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display)
         elif section == "Şut Lokasyonu":
-            league, season, team, league_display, season_display, situation_type = get_user_selection(include_situation_type=True)
-            shot_location_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display, situation_type=situation_type)
+            with st.spinner("İçerik hazırlanıyor..."):
+                league, season, team, league_display, season_display, situation_type = get_user_selection(include_situation_type=True)
+                shot_location_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display, situation_type=situation_type)
     elif general_section == "Karşılaştırmalı":
         section = st.sidebar.radio(
             "Alt Kategori Seçin:",
@@ -101,9 +103,10 @@ def run_app():
         elif section == "xG":
             analysis_type = st.sidebar.selectbox("xG Analiz Tipi Seçin:", ["Kümülatif xG ve Gol (Haftalık Seri)"])
 
-            league, season, _, league_display, season_display, _ = get_user_selection(include_situation_type=False, include_team=False)
-            if analysis_type == "Kümülatif xG ve Gol (Haftalık Seri)":
-                xg_main(league, season, league_display, season_display)
+            with st.spinner("İçerik hazırlanıyor..."):
+                league, season, _, league_display, season_display, _ = get_user_selection(include_situation_type=False, include_team=False)
+                if analysis_type == "Kümülatif xG ve Gol (Haftalık Seri)":
+                    xg_main(league, season, league_display, season_display)
 
 if __name__ == "__main__":
     run_app()
