@@ -59,7 +59,7 @@ def display_homepage():
 def run_app():
     st.sidebar.title("Bu Analitik Futbol | Türkiye")
     general_section = st.sidebar.radio(
-        "Kategori Seçin:",
+        "Ana Kategori Seçin:",
         options=["Ana Sayfa", "Takım Özel", "Karşılaştırmalı"],
         index=0
     )
@@ -68,7 +68,7 @@ def run_app():
         display_homepage()
     elif general_section == "Takım Özel":
         section = st.sidebar.radio(
-            "Kategori seçin:",
+            "Alt Kategori seçin:",
             options=["Ana Sayfa", "Gol Ağı", "Şut Lokasyonu"],
             index=0
         )
@@ -87,7 +87,7 @@ def run_app():
             shot_location_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display, situation_type=situation_type)
     elif general_section == "Karşılaştırmalı":
         section = st.sidebar.radio(
-            "Kategori seçin:",
+            "Alt Kategori seçin:",
             options=["Ana Sayfa", "xG"],
             index=0
         )
