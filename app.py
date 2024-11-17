@@ -22,14 +22,14 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 def get_user_selection(include_situation_type=True, include_team=True):
-    league_display = st.sidebar.selectbox("Lig seçin:", ["Süper Lig"], disabled=True)
+    league_display = st.sidebar.selectbox("Lig Seçin:", ["Süper Lig"], disabled=True)
     league = "super_lig" if league_display == "Süper Lig" else league_display
-    season_display = st.sidebar.selectbox("Sezon seçin:", ["2024/25"], disabled=True)
+    season_display = st.sidebar.selectbox("Sezon Seçin:", ["2024/25"], disabled=True)
     season = "2425" if season_display == "2024/25" else season_display
 
     team = None
     if include_team:
-        team = st.sidebar.selectbox("Takım seçin:", ["Takım seçin"] + team_list)
+        team = st.sidebar.selectbox("Takım Seçin:", ["Takım seçin"] + team_list)
 
     situation_type = None
     if include_situation_type:
@@ -68,7 +68,7 @@ def run_app():
         display_homepage()
     elif general_section == "Takım Özel":
         section = st.sidebar.radio(
-            "Alt Kategori seçin:",
+            "Alt Kategori Seçin:",
             options=["Ana Sayfa", "Gol Ağı", "Şut Lokasyonu"],
             index=0
         )
@@ -87,7 +87,7 @@ def run_app():
             shot_location_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display, situation_type=situation_type)
     elif general_section == "Karşılaştırmalı":
         section = st.sidebar.radio(
-            "Alt Kategori seçin:",
+            "Alt Kategori Seçin:",
             options=["Ana Sayfa", "xG"],
             index=0
         )
@@ -99,8 +99,7 @@ def run_app():
                 </p>
             """, unsafe_allow_html=True)
         elif section == "xG":
-            st.sidebar.subheader("Analiz Tipi Seçin:")
-            analysis_type = st.sidebar.selectbox("xG Analiz Tipi:", ["Kümülatif xG ve Gol (Haftalık Seri)"])
+            analysis_type = st.sidebar.selectbox("xG Analiz Tipi Seçin:", ["Kümülatif xG ve Gol (Haftalık Seri)"])
 
             league, season, _, league_display, season_display, _ = get_user_selection(include_situation_type=False, include_team=False)
             if analysis_type == "Kümülatif xG ve Gol (Haftalık Seri)":
