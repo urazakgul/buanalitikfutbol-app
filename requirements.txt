@@ -1,4 +1,8 @@
-streamlit
-mplsoccer
-matplotlib
+numpy
 pandas
+matplotlib
+seaborn
+mplsoccer
+adjustText
+streamlit
+st-social-media-links

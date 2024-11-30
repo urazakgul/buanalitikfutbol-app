@@ -1,0 +1,71 @@
+.big-font {
+    font-size: 48px !important;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 24px !important;
+    line-height: 1.8;
+}
+
+mark {
+    background-color: orange;
+    color: black;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #ddd;
+}
+
+.download-button {
+    background-color: #388E3C;
+    border: none;
+    color: white !important;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+    text-decoration: none;
+}
+
+.error-button {
+    background-color: #ff4b4b;
+    color: white !important;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none !important;
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+}
+
+.error-button:hover {
+    background-color: #e03e3e;
+}
+
+.css-16huue1, .stRadio label {
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+input[type="radio"] {
+    margin: 0;
+    transform: scale(1.2);
+}

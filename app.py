@@ -1,112 +1,87 @@
 import streamlit as st
-from config import team_list, change_situations
-from code.goal_path import main as goal_path_main
-from code.shot_location import main as shot_location_main
-from code.xg import main as xg_main
+from modules.homepage import display_homepage
+from modules.team_based import display_team_based
+from modules.team_comparison import display_team_comparison
+from config import team_list, change_situations, change_body_parts
+from code.utils.helpers import load_styles
+from st_social_media_links import SocialMediaIcons
+from streamlit_option_menu import option_menu
 
-st.set_page_config(page_title="Bu Analitik Futbol", layout="wide")
+st.set_page_config(
+    page_title="Bu Analitik Futbol",
+    page_icon=":soccer:",
+    layout="wide"
+)
 
-st.markdown("""
-    <link rel="stylesheet" href="style.css">
-    <style>
-    .big-font {
-        font-size: 48px !important;
-    }
-    .medium-font {
-        font-size: 24px !important;
-    }
-    .small-font {
-        font-size: 18px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+social_media_links = {
+    "X": {"url": "https://www.x.com/urazdev", "color": "#fff"},
+    "GitHub": {"url": "https://www.github.com/urazakgul", "color": "#fff"},
+    "Reddit": {"url": "https://www.reddit.com/user/urazdev/", "color": "#fff"},
+    "LinkedIn": {"url": "https://www.linkedin.com/in/uraz-akg%C3%BCl-439b36239/", "color": "#fff"}
+}
 
-def get_user_selection(include_situation_type=True, include_team=True):
-    league_display = st.sidebar.selectbox("Lig Seçin:", ["Süper Lig"], disabled=True)
-    league = "super_lig" if league_display == "Süper Lig" else league_display
-    season_display = st.sidebar.selectbox("Sezon Seçin:", ["2024/25"], disabled=True)
-    season = "2425" if season_display == "2024/25" else season_display
-
-    team = None
-    if include_team:
-        team = st.sidebar.selectbox("Takım Seçin:", ["Takım seçin"] + team_list)
-
-    situation_type = None
-    if include_situation_type:
-        situation_type_display = st.sidebar.selectbox("Şut Tipi Seçin:", ["Hepsi"] + list(change_situations.values()))
-        situation_type = situation_type_display if situation_type_display != "Hepsi" else None
-
-    return league, season, team, league_display, season_display, situation_type
-
-def display_homepage():
-    st.markdown('<h1 class="big-font">BAF - SÜPER LİG\'e Hoş Geldiniz</h1>', unsafe_allow_html=True)
-    st.markdown("""
-        <p class="medium-font">
-        Bu uygulama, Süper Lig özelinde çeşitli görselleştirmeler ve analizler sunar.
-        </p>
-    """, unsafe_allow_html=True)
-    st.image("imgs/buanalitikfutbol.PNG", use_column_width=True)
-    st.markdown("""
-        <hr>
-        <p class="small-font">
-        <strong>İletişim:</strong><br>
-        E-posta: <a href="mailto:urazdev@gmail.com">urazdev@gmail.com</a><br>
-        X (Twitter): <a href="https://twitter.com/urazdev" target="_blank">@urazdev</a><br>
-        Web: <a href="https://www.buanalitikfutbol.com/" target="_blank">https://www.buanalitikfutbol.com/</a>
-        </p>
-    """, unsafe_allow_html=True)
+load_styles()
 
 def run_app():
-    st.sidebar.title("Bu Analitik Futbol | Türkiye")
-    general_section = st.sidebar.radio(
-        "Ana Kategori Seçin:",
-        options=["Ana Sayfa", "Takım Özel", "Karşılaştırmalı"],
-        index=0
+    general_section = option_menu(
+        menu_title=None,
+        options=["Ana Sayfa", "Takım", "Oyuncu", "Hakkında"],
+        icons=["house", "shield", "person", "info-circle"],
+        menu_icon="cast",
+        default_index=0,
+        orientation="horizontal",
+        styles={
+            "container": {"padding": "0!important", "background-color": "#262730"},
+            "icon": {"color": "orange", "font-size": "18px"},
+            "nav-link": {"font-size": "20px", "text-align": "center", "margin": "0px", "--hover-color": "#444"},
+            "nav-link-selected": {"background-color": "orange"},
+        }
     )
+
+    with st.sidebar:
+        st.image("./imgs/buanalitikfutbol.PNG", use_container_width=True)
+
+    social_media_icons = SocialMediaIcons(
+        [link["url"] for link in social_media_links.values()],
+        colors=[link["color"] for link in social_media_links.values()]
+    )
+    social_media_icons.render(sidebar=True)
+
+    coffee_button = """
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="https://www.buymeacoffee.com/urazdev" target="_blank">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+            alt="Buy Me a Coffee"
+            style="height: 50px; width: 217px;">
+        </a>
+    </div>
+    """
+
+    st.sidebar.markdown(coffee_button, unsafe_allow_html=True)
+
+    st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
 
     if general_section == "Ana Sayfa":
         display_homepage()
-    elif general_section == "Takım Özel":
-        section = st.sidebar.radio(
-            "Alt Kategori Seçin:",
-            options=["Ana Sayfa", "Gol Ağı", "Şut Lokasyonu"],
-            index=0
+    elif general_section == "Takım":
+        selection = st.sidebar.radio(
+            "Takım Bazlı Analiz Türü",
+            ["Spesifik", "Karşılaştırma"],
+            index=None,
+            label_visibility="hidden"
         )
 
-        if section == "Ana Sayfa":
-            st.markdown('<h1 class="big-font">Takım Özel</h1>', unsafe_allow_html=True)
-            st.markdown("""
-                <p class="medium-font">
-                </p>
-            """, unsafe_allow_html=True)
-        elif section == "Gol Ağı":
-            with st.spinner("İçerik hazırlanıyor..."):
-                league, season, team, league_display, season_display, _ = get_user_selection(include_situation_type=False)
-                goal_path_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display)
-        elif section == "Şut Lokasyonu":
-            with st.spinner("İçerik hazırlanıyor..."):
-                league, season, team, league_display, season_display, situation_type = get_user_selection(include_situation_type=True)
-                shot_location_main(league=league, season=season, team=team, league_display=league_display, season_display=season_display, situation_type=situation_type)
-    elif general_section == "Karşılaştırmalı":
-        section = st.sidebar.radio(
-            "Alt Kategori Seçin:",
-            options=["Ana Sayfa", "xG"],
-            index=0
+        if selection == "Spesifik":
+            display_team_based(team_list, change_situations, change_body_parts)
+        elif selection == "Karşılaştırma":
+            display_team_comparison(team_list, change_situations, change_body_parts)
+    elif general_section == "Oyuncu":
+        selection = st.sidebar.radio(
+            "Oyuncu Bazlı Analiz Türü",
+            ["Spesifik", "Karşılaştırma"],
+            index=None,
+            label_visibility="hidden"
         )
-
-        if section == "Ana Sayfa":
-            st.markdown('<h1 class="big-font">Karşılaştırmalı</h1>', unsafe_allow_html=True)
-            st.markdown("""
-                <p class="medium-font">
-                </p>
-            """, unsafe_allow_html=True)
-        elif section == "xG":
-            analysis_type = st.sidebar.selectbox("xG Analiz Tipi Seçin:", ["Kümülatif xG ve Gol (Haftalık Seri)"])
-
-            with st.spinner("İçerik hazırlanıyor..."):
-                league, season, _, league_display, season_display, _ = get_user_selection(include_situation_type=False, include_team=False)
-                if analysis_type == "Kümülatif xG ve Gol (Haftalık Seri)":
-                    xg_main(league, season, league_display, season_display)
 
 if __name__ == "__main__":
     run_app()
