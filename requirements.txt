@@ -6,3 +6,4 @@ mplsoccer
 adjustText
 streamlit
 st-social-media-links
+streamlit_option_menu
