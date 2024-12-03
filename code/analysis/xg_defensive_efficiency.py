@@ -37,9 +37,17 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
     ax.set_title(
         f"{league_display} {season_display} Sezonu {max_round}. Hafta:\nRakip Şut Kalitesi ve Şut Dönüşüm Oranı",
         fontsize=16,
-        pad=50
+        pad=55
     )
     ax.grid(True, linestyle="--", alpha=0.7)
+
+    ax.legend(
+        loc='upper center',
+        bbox_to_anchor=(0.5, 1.05),
+        ncol=2,
+        fontsize=8,
+        frameon=False
+    )
 
     fig.text(
         0.99, -0.1,
