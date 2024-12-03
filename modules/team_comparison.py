@@ -3,7 +3,7 @@ import streamlit as st
 from code.analysis.xg_time_series import main as xg_time_series_main
 from code.analysis.xg_actual_vs_expected import main as xg_actual_vs_expected_main
 from code.analysis.xg_strengths_vs_weaknesses import main as xg_strengths_vs_weaknesses_main
-from code.analysis.xg_ladder import main as xg_ladder_main
+from code.analysis.xg_defensive_efficiency import main as xg_defensive_efficiency_main
 from code.analysis.performance import main as performance_main
 from code.utils.helpers import load_filtered_json_files, get_user_selection
 from config import match_performances
@@ -29,7 +29,7 @@ def display_team_comparison(team_list, change_situations, change_body_parts):
                 "Gerçekleşen ile Beklenen Gol Farkı",
                 "Üretilen xG ve Yenen xG (xGA)",
                 "Üretilen xG ve Yenen xG (xGA) (Gerçekleşen ile Fark)",
-                "xG Merdiveni"
+                "xG'ye Dayalı Savunma Verimliliği"
             ],
             key="xg_analysis_type"
         )
@@ -109,19 +109,8 @@ def display_team_comparison(team_list, change_situations, change_body_parts):
                 else:
                     st.warning("Lütfen bir kategori seçin.")
 
-            elif analysis_type == "xG Merdiveni":
-                directories = os.path.join(os.path.dirname(__file__), '../data/sofascore/raw/')
-                matches_data = load_filtered_json_files(directories, 'matches', league, season)
-                matches_data = matches_data[['round', 'home_team', 'away_team']]
-                rounds = matches_data['round'].unique()
-                selected_round = st.sidebar.selectbox("Hafta:", ["Seçin"] + sorted(rounds), key="xg_ladder_round")
-                if selected_round and selected_round != "Seçin":
-                    filtered_matches = matches_data[matches_data['round'] == selected_round]
-                    team_pairs = filtered_matches.apply(lambda row: f"{row['home_team']} - {row['away_team']}", axis=1)
-                    selected_match = st.sidebar.selectbox("Maç:", ["Seçin"] + list(team_pairs), key="xg_ladder_match")
-                    if selected_match and selected_match != "Seçin":
-                        home_team, away_team = selected_match.split(" - ")
-                        xg_ladder_main(league, season, league_display, season_display, selected_round, home_team, away_team)
+            elif analysis_type == "xG'ye Dayalı Savunma Verimliliği":
+                    xg_defensive_efficiency_main(league, season, league_display, season_display)
 
     elif section == "Maç Performansı":
         league, season, _, league_display, season_display, _, _ = get_user_selection(

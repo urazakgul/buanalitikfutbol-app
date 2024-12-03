@@ -2,6 +2,7 @@ import streamlit as st
 from modules.homepage import display_homepage
 from modules.team_based import display_team_based
 from modules.team_comparison import display_team_comparison
+from modules.match_comparison import display_match_comparison
 from config import team_list, change_situations, change_body_parts
 from code.utils.helpers import load_styles
 from st_social_media_links import SocialMediaIcons
@@ -25,8 +26,8 @@ load_styles()
 def run_app():
     general_section = option_menu(
         menu_title=None,
-        options=["Ana Sayfa", "Takım", "Oyuncu", "Hakkında"],
-        icons=["house", "shield", "person", "info-circle"],
+        options=["Ana Sayfa", "Takım", "Oyuncu", "Maç", "Hakkında"],
+        icons=["house", "shield", "person", "calendar", "info-circle"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal",
@@ -83,5 +84,21 @@ def run_app():
             label_visibility="hidden"
         )
 
+        if selection == "Spesifik":
+            pass
+        elif selection == "Karşılaştırma":
+            pass
+    elif general_section == "Maç":
+        selection = st.sidebar.radio(
+            "Maç Bazlı Analiz Türü",
+            ["Spesifik", "Karşılaştırma"],
+            index=None,
+            label_visibility="hidden"
+        )
+
+        if selection == "Spesifik":
+            pass
+        elif selection == "Karşılaştırma":
+            display_match_comparison(team_list, change_situations, change_body_parts)
 if __name__ == "__main__":
     run_app()
