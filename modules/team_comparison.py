@@ -29,7 +29,7 @@ def display_team_comparison(team_list, change_situations, change_body_parts):
                 "Gerçekleşen ile Beklenen Gol Farkı",
                 "Üretilen xG ve Yenen xG (xGA)",
                 "Üretilen xG ve Yenen xG (xGA) (Gerçekleşen ile Fark)",
-                "xG'ye Dayalı Savunma Verimliliği"
+                "xG Bazlı Savunma Verimliliği"
             ],
             key="xg_analysis_type"
         )
@@ -109,7 +109,7 @@ def display_team_comparison(team_list, change_situations, change_body_parts):
                 else:
                     st.warning("Lütfen bir kategori seçin.")
 
-            elif analysis_type == "xG'ye Dayalı Savunma Verimliliği":
+            elif analysis_type == "xG Bazlı Savunma Verimliliği":
                     xg_defensive_efficiency_main(league, season, league_display, season_display)
 
     elif section == "Maç Performansı":
