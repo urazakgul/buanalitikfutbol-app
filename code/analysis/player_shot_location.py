@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from config import PLOT_STYLE
+from config import change_situations, PLOT_STYLE
 from code.utils.helpers import add_download_button, load_filtered_json_files
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
@@ -42,6 +42,13 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
         ax=ax
     )
 
+    total_shots = len(df_goals) + len(df_non_goals)
+    conversion_rate = len(df_goals) / total_shots * 100 if total_shots > 0 else 0
+
+    non_penalty_goals = df_goals[df_goals["situation"] != "Penaltıdan"]
+    non_penalty_shots = total_shots - len(df_goals[df_goals["situation"] == "Penaltıdan"])
+    non_penalty_conversion_rate = len(non_penalty_goals) / non_penalty_shots * 100 if non_penalty_shots > 0 else 0
+
     ax.set_title(
         f"{league_display} {season_display} Sezonu Oyuncu Şut Lokasyonları\n{player_name} ({team_name})",
         fontsize=16,
@@ -57,9 +64,20 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
         color="gray"
     )
 
+    ax.text(
+        x=50,
+        y=105,
+        s=(
+            f"Şut Dönüşüm Oranı: %{conversion_rate:.1f} (Penaltı Dahil), %{non_penalty_conversion_rate:.1f} (Penaltı Hariç)"
+        ),
+        size=12,
+        va="center",
+        ha="center"
+    )
+
     ax.legend(
         loc="upper center",
-        bbox_to_anchor=(0.5, 1.03),
+        bbox_to_anchor=(0.5, 1.01),
         ncol=2,
         fontsize=12,
         frameon=False,
@@ -99,6 +117,8 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
         shot_maps_data["player_coordinates_x"] = 100 - shot_maps_data["player_coordinates_x"]
         shot_maps_data["player_coordinates_y"] = 100 - shot_maps_data["player_coordinates_y"]
+
+        shot_maps_data["situation"] = shot_maps_data["situation"].replace(change_situations)
 
         player_data = shot_maps_data[(shot_maps_data["team_name"] == team) & (shot_maps_data["player_name"] == player)]
 

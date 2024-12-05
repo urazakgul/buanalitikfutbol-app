@@ -18,7 +18,7 @@ def merge_match_data(matches_data, shot_maps_data):
     merged_df = matches_data.merge(filtered_shot_maps, on=["tournament", "season", "round", "game_id"])
     return merged_df[~merged_df["goal_type"].isin(["penalty", "own"])]
 
-def create_goal_network_plot(team_data, team_name, league_display, season_display, max_round):
+def create_goal_network_plot(team_data, team_name, league_display, season_display):
     pitch = VerticalPitch(
         pitch_type="opta",
         corner_arcs=True,
@@ -85,18 +85,18 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
     )
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu İlk {max_round} Hafta:\n{team_name} Takımının Gol Ağları ve Etkin Olduğu Alanlar",
+        f"{league_display} {season_display} Sezonu Takımların Gol Ağları ve Etkin Olduğu Alanlar\n{team_name}",
         fontsize=12
     )
     fig.suptitle(
         "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
         y=0,
         x=0.5,
-        fontsize=6,
+        fontsize=12,
         fontstyle="italic",
         color="gray"
     )
-    file_name = f"{league_display}_{season_display}_{max_round}_{team_name}_Gol Ağı.png"
+    file_name = f"{league_display}_{season_display}_{team_name}_Gol Ağı.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -138,9 +138,7 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
 
         team_data = passing_networks_data[passing_networks_data["team_name"] == team]
 
-        max_round = matches_data["round"].max()
-
-        create_goal_network_plot(team_data, team, league_display, season_display, max_round)
+        create_goal_network_plot(team_data, team, league_display, season_display)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")
