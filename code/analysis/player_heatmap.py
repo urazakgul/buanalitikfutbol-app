@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display, season_display, max_round, player_name):
+def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display, season_display, player_name):
 
     pitch = VerticalPitch(
         pitch_type='opta',
@@ -73,9 +73,7 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
             (hmap_data_df['player_name'] == player)
         ]
 
-        max_round = matches_data["round"].max()
-
-        create_player_heatmap_plot(filtered_hmap_data_df, team, league_display, season_display, max_round, player)
+        create_player_heatmap_plot(filtered_hmap_data_df, team, league_display, season_display, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

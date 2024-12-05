@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, max_round, player_name):
+def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, player_name):
     pitch = VerticalPitch(
         pitch_type="opta",
         corner_arcs=True,
@@ -125,9 +125,7 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         df_goals = player_data[player_data["is_goal"] == 1]
         df_non_goals = player_data[player_data["is_goal"] == 0]
 
-        max_round = matches_data["round"].max()
-
-        create_player_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, max_round, player)
+        create_player_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")
