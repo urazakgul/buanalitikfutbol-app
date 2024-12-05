@@ -123,10 +123,6 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         matches_data = load_filtered_json_files(directories, "matches", league, season)
         shotmaps_data = load_filtered_json_files(directories, "shot_maps", league, season)
 
-        if matches_data.empty or shotmaps_data.empty:
-            st.error("Seçilen takım için uygun veri bulunamadı.")
-            return
-
         shotmaps_data = shotmaps_data[[
             "season", "round", "game_id", "is_home", "shot_type", "situation",
             "goal_mouth_location", "player_coordinates_x", "player_coordinates_y"

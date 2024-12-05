@@ -5,7 +5,7 @@ from code.analysis.xg_actual_vs_expected import main as xg_actual_vs_expected_ma
 from code.analysis.xg_strengths_vs_weaknesses import main as xg_strengths_vs_weaknesses_main
 from code.analysis.xg_defensive_efficiency import main as xg_defensive_efficiency_main
 from code.analysis.performance import main as performance_main
-from code.utils.helpers import load_filtered_json_files, get_user_selection
+from code.utils.helpers import get_user_selection
 from config import match_performances
 
 def display_team_comparison(team_list, change_situations, change_body_parts):

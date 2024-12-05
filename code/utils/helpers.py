@@ -35,7 +35,7 @@ def add_footer_text(ax: Axes, footer_text: str = "Veri: SofaScore\nHesaplamalar 
         ha="right"
     )
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_filtered_json_files(directory: str, subdirectory: str, league: str, season: str) -> pd.DataFrame:
     path = os.path.join(directory, subdirectory, f"{league}_{subdirectory}_{season}.json")
     files = glob.glob(path)

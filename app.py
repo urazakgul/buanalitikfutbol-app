@@ -2,6 +2,7 @@ import streamlit as st
 from modules.homepage import display_homepage
 from modules.team_based import display_team_based
 from modules.team_comparison import display_team_comparison
+from modules.player_based import display_player_based
 from modules.match_comparison import display_match_comparison
 from config import team_list, change_situations, change_body_parts
 from code.utils.helpers import load_styles
@@ -71,7 +72,6 @@ def run_app():
             index=None,
             label_visibility="hidden"
         )
-
         if selection == "Spesifik":
             display_team_based(team_list, change_situations, change_body_parts)
         elif selection == "Karşılaştırma":
@@ -83,9 +83,8 @@ def run_app():
             index=None,
             label_visibility="hidden"
         )
-
         if selection == "Spesifik":
-            pass
+            display_player_based(team_list, change_situations, change_body_parts)
         elif selection == "Karşılaştırma":
             pass
     elif general_section == "Maç":
@@ -95,7 +94,6 @@ def run_app():
             index=None,
             label_visibility="hidden"
         )
-
         if selection == "Spesifik":
             pass
         elif selection == "Karşılaştırma":

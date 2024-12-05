@@ -26,7 +26,7 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
         label=False,
         tick=False
     )
-    fig, ax = pitch.draw(figsize=(12, 8))
+    fig, ax = pitch.draw(figsize=(16, 16))
 
     for x in [21, 37, 63, 79]:
         ax.axvline(x=x, color="black", linestyle="--", lw=1, alpha=0.5)
@@ -78,7 +78,7 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
         event_colors.keys(),
         title="",
         loc="lower center",
-        bbox_to_anchor=(0.5, -0.15),
+        bbox_to_anchor=(0.5, -0.05),
         frameon=False,
         ncol=3,
         fontsize=8
@@ -90,7 +90,7 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
     )
     fig.suptitle(
         "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        y=0.13,
+        y=0,
         x=0.5,
         fontsize=6,
         fontstyle="italic",
