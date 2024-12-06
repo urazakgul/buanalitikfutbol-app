@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max_round, plot_type):
+def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, last_round, plot_type):
     teams = [team for team in team_list if team in xg_goal_teams["team_name"].unique()]
 
     global_x_min = xg_goal_teams["round"].min()
@@ -63,7 +63,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max
                 fontsize="large"
             )
             fig.suptitle(
-                f"{league_display} {season_display} Sezonu Takımlara Göre {max_round} Haftalık Kümülatif xG ve Gol",
+                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ve Gol",
                 fontsize=24,
                 y=1.02
             )
@@ -111,7 +111,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max
             )
 
             fig.suptitle(
-                f"{league_display} {season_display} Sezonu Takımlara Göre {max_round} Haftalık Kümülatif xG ve Gol Farkı",
+                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ve Gol Farkı",
                 fontsize=24,
                 y=1.02
             )
@@ -140,7 +140,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max
 
     plt.tight_layout(rect=[0, 0.05, 1, 1])
 
-    file_name = f"{league_display}_{season_display}_{max_round}_{plot_type.replace(' ', '_')}.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{plot_type.replace(' ', '_')}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -180,12 +180,12 @@ def main(league, season, league_display, season_display, plot_type):
 
         xg_goal_teams = xg_goal_teams.dropna(subset=["cumulative_goal_count", "cumulative_total_xg", "round"])
 
-        max_round = matches_data["round"].max()
+        last_round = matches_data["round"].max()
 
         if plot_type == "Kümülatif xG ve Gol (Haftalık Seri)":
-            create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max_round, plot_type="Kümülatif xG ve Gol (Haftalık Seri)")
+            create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, last_round, plot_type="Kümülatif xG ve Gol (Haftalık Seri)")
         elif plot_type == "Kümülatif xG ve Gol Farkı (Haftalık Seri)":
-            create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, max_round, plot_type="Kümülatif xG ve Gol Farkı (Haftalık Seri)")
+            create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, last_round, plot_type="Kümülatif xG ve Gol Farkı (Haftalık Seri)")
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

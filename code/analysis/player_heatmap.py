@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display, season_display, player_name):
+def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display, season_display, last_round, player_name):
 
     pitch = VerticalPitch(
         pitch_type='opta',
@@ -30,7 +30,7 @@ def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display,
     )
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Oyuncu Isı Haritası\n{player_name} ({team_name})",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Oyuncu Isı Haritası\n{player_name} ({team_name})",
         fontsize=16
     )
 
@@ -43,7 +43,7 @@ def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display,
         color="gray"
     )
 
-    file_name = f"{league_display}_{season_display}_{player_name}_{team_name}_Isı Haritası.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{player_name}_{team_name}_Isı Haritası.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -73,7 +73,9 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
             (hmap_data_df['player_name'] == player)
         ]
 
-        create_player_heatmap_plot(filtered_hmap_data_df, team, league_display, season_display, player)
+        last_round = matches_data['round'].max()
+
+        create_player_heatmap_plot(filtered_hmap_data_df, team, league_display, season_display, last_round, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, situation_type=None):
+def create_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, last_round, situation_type=None):
     pitch = VerticalPitch(
         pitch_type="opta",
         corner_arcs=True,
@@ -54,7 +54,7 @@ def create_shot_location_plot(df_goals, df_non_goals, team_name, league_display,
         x=50,
         y=110,
         s=(
-            f"{league_display} {season_display} Sezonu Takım Şut Lokasyonları\n"
+            f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takım Şut Lokasyonları\n"
             f"{team_name} {title_suffix}"
         ),
         size=18,
@@ -108,7 +108,7 @@ def create_shot_location_plot(df_goals, df_non_goals, team_name, league_display,
     )
 
     situation_filename = f"_{situation_type}" if situation_type else ""
-    file_name = f"{league_display}_{season_display}_{team_name}_Şut Lokasyonu{situation_filename}.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{team_name}_Şut Lokasyonları{situation_filename}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -152,7 +152,9 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         df_goals = team_data[team_data["is_goal"] == 1]
         df_non_goals = team_data[team_data["is_goal"] == 0]
 
-        create_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, situation_type)
+        last_round = matches_data['round'].max()
+
+        create_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, last_round, situation_type)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

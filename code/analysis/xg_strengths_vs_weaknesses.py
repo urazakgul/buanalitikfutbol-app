@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_display, max_round, plot_type, category=None, situation_type=None, body_part_type=None):
+def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_display, last_round, plot_type, category=None, situation_type=None, body_part_type=None):
 
     fig, ax = plt.subplots(figsize=(10, 14))
 
@@ -55,7 +55,7 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
     ax.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.3)
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu İlk {max_round} Hafta:\n {title_suffix}\n{additional_info_text}",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta {title_suffix}\n{additional_info_text}",
         fontsize=14,
         pad=35
     )
@@ -73,7 +73,7 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
 
     plt.tight_layout()
 
-    file_name = f"{league_display}_{season_display}_{max_round}_{plot_type}_{additional_info_text}.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{plot_type}_{additional_info_text}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -91,8 +91,6 @@ def main(league, season, league_display, season_display, situation_type=None, bo
 
         shot_maps_data["situation"] = shot_maps_data["situation"].replace(change_situations)
         shot_maps_data["body_part"] = shot_maps_data["body_part"].replace(change_body_parts)
-
-        st.write(shot_maps_data)
 
         if category == "situation" and situation_type is not None:
             filtered_data = shot_maps_data[shot_maps_data["situation"] == situation_type]
@@ -143,14 +141,14 @@ def main(league, season, league_display, season_display, situation_type=None, bo
         team_totals_df["xgDiff"] = team_totals_df["goals"] - team_totals_df["xg"]
         team_totals_df["xgaDiff"] = team_totals_df["conceded_goals"] - team_totals_df["xga"]
 
-        max_round = matches_data["round"].max()
+        last_round = matches_data["round"].max()
 
         if plot_type == "Üretilen xG ve Yenen xG (xGA)":
             create_strength_vs_weakness_xg_plot(
                 team_totals_df,
                 league_display,
                 season_display,
-                max_round,
+                last_round,
                 plot_type="Üretilen xG ve Yenen xG (xGA)",
                 category=category,
                 situation_type=situation_type,
@@ -161,7 +159,7 @@ def main(league, season, league_display, season_display, situation_type=None, bo
                 team_totals_df,
                 league_display,
                 season_display,
-                max_round,
+                last_round,
                 plot_type="Üretilen xG ve Yenen xG (xGA) (Gerçekleşen ile Fark)",
                 category=category,
                 situation_type=situation_type,

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, player_name):
+def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, last_round, player_name):
     pitch = VerticalPitch(
         pitch_type="opta",
         corner_arcs=True,
@@ -50,7 +50,7 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
     non_penalty_conversion_rate = len(non_penalty_goals) / non_penalty_shots * 100 if non_penalty_shots > 0 else 0
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Oyuncu Şut Lokasyonları\n{player_name} ({team_name})",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Oyuncu Şut Lokasyonları\n{player_name} ({team_name})",
         fontsize=16,
         y=1.05
     )
@@ -125,7 +125,9 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         df_goals = player_data[player_data["is_goal"] == 1]
         df_non_goals = player_data[player_data["is_goal"] == 0]
 
-        create_player_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, player)
+        last_round = matches_data['round'].max()
+
+        create_player_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, last_round, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

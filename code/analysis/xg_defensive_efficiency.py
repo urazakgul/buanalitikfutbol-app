@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, max_round):
+def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, last_round):
 
     fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -35,9 +35,9 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
     ax.set_xlabel("Rakip Şut Başına Beklenen Gol (xG) (Penaltı Hariç)", labelpad=20, fontsize=12)
     ax.set_ylabel("Rakip Şut Dönüşüm Oranı (%) (Penaltı Hariç)", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu {max_round}. Hafta:\nRakip Şut Kalitesi ve Şut Dönüşüm Oranı",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Rakip Şut Kalitesi ve Şut Dönüşüm Oranı",
         fontsize=16,
-        pad=55
+        pad=75
     )
     ax.grid(True, linestyle="--", alpha=0.7)
 
@@ -84,7 +84,7 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
             bbox=dict(facecolor="none", edgecolor="none")
         )
 
-    file_name = f"{league_display}_{season_display}_{max_round}_Rakip Şut Kalitesi ve Şut Dönüşüm Oranı.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_Rakip Şut Kalitesi ve Şut Dönüşüm Oranı.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -144,9 +144,9 @@ def main(league, season, league_display, season_display):
         team_opponent_df['non_penalty_xg_per_shot_against'] = team_opponent_df['xgConceded'] / team_opponent_df['opponent_shots']
         team_opponent_df['non_penalty_shot_conversion_against'] = (team_opponent_df['opponent_goals'] / team_opponent_df['opponent_shots']) * 100
 
-        max_round = matches_data["round"].max()
+        last_round = matches_data["round"].max()
 
-        create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, max_round)
+        create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, last_round)
 
     except Exception as e:
         st.error(f"Uygun veri bulunamadı. {e}")

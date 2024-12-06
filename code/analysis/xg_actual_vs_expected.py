@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, xg_xga_gerceklesen_teams_sorted, league_display, season_display, max_round):
+def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, season_display, last_round):
 
     fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -35,9 +35,9 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, xg_xga_gercekles
     ax.set_xlabel("Gerçekleşen - xG", labelpad=20, fontsize=12)
     ax.set_ylabel("Gerçekleşen - xGA", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu {max_round}. Hafta:\nTakımların Gerçekleşen ile Beklenen Gol Farkı",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımların Gerçekleşen ile Beklenen Gol Farkı",
         fontsize=16,
-        pad=40
+        pad=75
     )
     ax.grid(True, linestyle="--", alpha=0.7)
 
@@ -51,7 +51,7 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, xg_xga_gercekles
         color="gray"
     )
 
-    offset = 2
+    offset = 2.5
     annotations = [
         ("İyi Defans\nİyi Hücum",
          xg_xga_gerceklesen_teams["xgDiff"].max(),
@@ -78,7 +78,7 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, xg_xga_gercekles
 
     ax.invert_yaxis()
 
-    file_name = f"{league_display}_{season_display}_{max_round}_Gerçekleşen ile Beklenen Gol Farkı.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_Gerçekleşen ile Beklenen Gol Farkı.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -127,14 +127,9 @@ def main(league, season, league_display, season_display):
         actual_xg_xga_diffs["xgConcededDiff"] = actual_xg_xga_diffs["scores_against"] - actual_xg_xga_diffs["xgConceded"]
         xg_xga_gerceklesen_teams = actual_xg_xga_diffs[["team_name","xgDiff","xgConcededDiff"]]
 
-        xg_xga_gerceklesen_teams_sorted = xg_xga_gerceklesen_teams[
-            (xg_xga_gerceklesen_teams["xgDiff"] > np.mean(xg_xga_gerceklesen_teams["xgDiff"])) &
-            (xg_xga_gerceklesen_teams["xgConcededDiff"] < np.mean(xg_xga_gerceklesen_teams["xgConcededDiff"]))
-        ].sort_values("xgDiff")
+        last_round = matches_data["round"].max()
 
-        max_round = matches_data["round"].max()
-
-        create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, xg_xga_gerceklesen_teams_sorted, league_display, season_display, max_round)
+        create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, season_display, last_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")
