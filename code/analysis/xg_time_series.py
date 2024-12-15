@@ -111,7 +111,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, las
             )
 
             fig.suptitle(
-                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ve Gol Farkı",
+                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ile Gol Farkı",
                 fontsize=24,
                 y=1.02
             )

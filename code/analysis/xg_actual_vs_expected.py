@@ -1,5 +1,4 @@
 import os
-import numpy as np
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files
 from config import PLOT_STYLE

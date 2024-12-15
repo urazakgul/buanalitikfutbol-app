@@ -130,3 +130,23 @@ match_performance_translations = {
     "Punches": "Yumruklamalar",
     "Penalty saves": "Penaltı Kurtarışları"
 }
+
+match_stats_group_name = [
+    "Genel Görünüm",
+    "Şutlar",
+    "Hücum",
+    "Paslar",
+    "İkili Mücadeleler",
+    "Savunma",
+    "Kalecilik"
+]
+
+match_stats_group_name_translations = {
+    "Match overview": "Genel Görünüm",
+    "Shots": "Şutlar",
+    "Attack": "Hücum",
+    "Passes": "Paslar",
+    "Duels": "İkili Mücadeleler",
+    "Defending": "Savunma",
+    "Goalkeeping": "Kalecilik"
+}
