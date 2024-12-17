@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from config import event_type_translations, event_colors, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, turkish_upper
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
@@ -85,11 +85,21 @@ def create_goal_network_plot(team_data, team_name, league_display, season_displa
     )
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımların Gol Ağları ve Etkin Olduğu Alanlar\n{team_name}",
-        fontsize=12
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları ve Etkin Olduğu Alanlar",
+        fontsize=12,
+        fontweight="bold"
+    )
+    ax.text(
+        0.5, 0.99,
+        turkish_upper(team_name),
+        fontsize=10,
+        fontweight="bold",
+        ha="center",
+        va="center",
+        transform=ax.transAxes
     )
     fig.suptitle(
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
+        "Veri: SofaScore\nHazırlayan: @urazdev",
         y=0,
         x=0.5,
         fontsize=12,

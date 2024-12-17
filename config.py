@@ -69,11 +69,11 @@ match_performances = [
     "Pas Başarısı",
     "Gol Olan/Kaçırılan Büyük Fırsatlar",
     "Şut Başarısı",
-    "Ceza Sahası İçi/Dışı Oranı",
+    "Ceza Sahası İçi/Dışı Şut Oranı",
     "Ceza Sahasında Topla Buluşma",
     "Üçüncü Bölgeye Giriş Sayısı",
     "Üçüncü Bölge Aksiyon Başarısı",
-    "Yaptığı/Kendisine Yapılan Faul Sayısı",
+    "Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı",
     "Faul Başına Kart Sayısı",
     "Başarılı Uzun Pas Oranı",
     "Başarılı Orta Oranı"

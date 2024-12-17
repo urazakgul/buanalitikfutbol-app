@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from config import PLOT_STYLE
-from code.utils.helpers import add_footer_text, add_download_button
+from code.utils.helpers import add_footer, add_download_button
 import streamlit as st
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -40,11 +40,11 @@ def plot_boxplot(
                     va="center", ha="right", fontsize=9, color="black", weight="bold"
                 )
 
-    ax.set_title(title, fontsize=12, pad=35)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=35)
     ax.set_xlabel(xlabel, fontsize=12, labelpad=20)
     ax.set_ylabel(ylabel)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
-    add_footer_text(ax)
+    add_footer(fig)
     st.markdown(add_download_button(fig, file_name=filename), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -81,7 +81,7 @@ def plot_stacked_bar_chart(
                 ax.text(start + row[col] / 2, i, f"%{percent:.1f}", ha="center", va="center", fontsize=9, color="black")
                 start += row[col]
 
-    ax.set_title(title, fontsize=12, pad=35)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=35)
     ax.set_xlabel(xlabel, fontsize=12, labelpad=20)
     ax.set_ylabel(ylabel)
     ax.legend(
@@ -92,7 +92,7 @@ def plot_stacked_bar_chart(
         ncol=2,
         frameon=False
     )
-    add_footer_text(ax)
+    add_footer(fig)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     st.markdown(add_download_button(fig, file_name=filename), unsafe_allow_html=True)
@@ -145,11 +145,11 @@ def plot_horizontal_bar(
                 formatted_value, va="center", ha=ha, fontsize=9, color="black"
             )
 
-    ax.set_title(title, fontsize=12, pad=35)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=35)
     ax.set_xlabel(xlabel, fontsize=12, labelpad=20)
     ax.set_ylabel(ylabel)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
-    add_footer_text(ax)
+    add_footer(fig)
     st.markdown(add_download_button(fig, file_name=filename), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -184,7 +184,7 @@ def plot_stacked_horizontal_bar(
                 ax.text(start + row[col] / 2, i, f"%{percent:.1f}", ha="center", va="center", fontsize=9, color="black")
                 start += row[col]
 
-    ax.set_title(title, fontsize=12, pad=35)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=35)
     ax.set_xlabel(xlabel, fontsize=12, labelpad=20)
     ax.set_ylabel(ylabel)
     ax.legend(
@@ -195,7 +195,7 @@ def plot_stacked_horizontal_bar(
         ncol=4,
         frameon=False
     )
-    add_footer_text(ax)
+    add_footer(fig)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     st.markdown(add_download_button(fig, file_name=filename), unsafe_allow_html=True)

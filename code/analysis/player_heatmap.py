@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from config import PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
@@ -30,18 +30,21 @@ def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display,
     )
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Oyuncu Isı Haritası\n{player_name} ({team_name})",
-        fontsize=16
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Oyuncu Isı Haritası",
+        fontsize=16,
+        fontweight="bold"
+    )
+    ax.text(
+        0.5, 0.99,
+        f"{turkish_upper(player_name)} ({turkish_upper(team_name)})",
+        fontsize=10,
+        fontweight="bold",
+        ha="center",
+        va="center",
+        transform=ax.transAxes
     )
 
-    fig.suptitle(
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        y=0,
-        x=0.5,
-        fontsize=12,
-        fontstyle="italic",
-        color="gray"
-    )
+    add_footer(fig, x=0.5, y=0, ha="center")
 
     file_name = f"{league_display}_{season_display}_{last_round}_{player_name}_{team_name}_Isı Haritası.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)

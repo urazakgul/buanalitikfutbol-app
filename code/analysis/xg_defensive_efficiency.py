@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 from config import PLOT_STYLE
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
@@ -32,12 +32,13 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
         ab = AnnotationBbox(getImage(logo_path), (row["non_penalty_xg_per_shot_against"], row["non_penalty_shot_conversion_against"]), frameon=False)
         ax.add_artist(ab)
 
-    ax.set_xlabel("Rakip Şut Başına Beklenen Gol (xG) (Penaltı Hariç)", labelpad=20, fontsize=12)
-    ax.set_ylabel("Rakip Şut Dönüşüm Oranı (%) (Penaltı Hariç)", labelpad=20, fontsize=12)
+    ax.set_xlabel("Rakip Şut Başına Beklenen Gol (xG) (Penaltı Hariç) (Daha küçük daha iyi)", labelpad=20, fontsize=12)
+    ax.set_ylabel("Rakip Şut Dönüşüm Oranı (%) (Penaltı Hariç) (Daha küçük daha iyi)", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Rakip Şut Kalitesi ve Şut Dönüşüm Oranı",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Rakip Şut Kalitesi ve Şut Dönüşüm Oranı",
         fontsize=16,
-        pad=75
+        fontweight="bold",
+        pad=40
     )
     ax.grid(True, linestyle="--", alpha=0.7)
 
@@ -49,40 +50,7 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
         frameon=False
     )
 
-    fig.text(
-        0.99, -0.1,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com\nKümülatif değerlerdir.",
-        horizontalalignment="right",
-        verticalalignment="bottom",
-        fontsize=10,
-        fontstyle="italic",
-        color="gray"
-    )
-
-    offset = 1.5
-    annotations = [
-        ("Yüksek Şut Kalitesi\nDüşük Şut Dönüşüm",
-         team_opponent_df["non_penalty_xg_per_shot_against"].max(),
-         team_opponent_df["non_penalty_shot_conversion_against"].min() - offset),
-        ("Düşük Şut Kalitesi\nDüşük Şut Dönüşüm",
-         team_opponent_df["non_penalty_xg_per_shot_against"].min(),
-         team_opponent_df["non_penalty_shot_conversion_against"].min() - offset),
-        ("Yüksek Şut Kalitesi\nYüksek Şut Dönüşüm",
-         team_opponent_df["non_penalty_xg_per_shot_against"].max(),
-         team_opponent_df["non_penalty_shot_conversion_against"].max() + offset),
-        ("Düşük Şut Kalitesi\nYüksek Şut Dönüşüm",
-         team_opponent_df["non_penalty_xg_per_shot_against"].min(),
-         team_opponent_df["non_penalty_shot_conversion_against"].max() + offset)
-    ]
-
-    for text, x, y in annotations:
-        ax.text(
-            x, y, text,
-            horizontalalignment="center",
-            verticalalignment="center",
-            fontsize=12,
-            bbox=dict(facecolor="none", edgecolor="none")
-        )
+    add_footer(fig)
 
     file_name = f"{league_display}_{season_display}_{last_round}_Rakip Şut Kalitesi ve Şut Dönüşüm Oranı.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)

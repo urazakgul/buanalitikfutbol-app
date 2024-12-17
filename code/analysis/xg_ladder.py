@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
 from config import PLOT_STYLE
 from adjustText import adjust_text
 import matplotlib.pyplot as plt
@@ -327,19 +327,12 @@ def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_displ
     fig.subplots_adjust(wspace=0.05)
     fig.suptitle(
         f"{league_display} {season_display} Sezonu {selected_round}. Hafta xG Merdiveni",
-        fontsize=22
+        fontsize=22,
+        fontweight="bold"
     )
     fig.supxlabel("Dakika", fontsize=16, x=0.5, y=-0.005)
 
-    fig.text(
-        0.99, -0.07,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        horizontalalignment="right",
-        verticalalignment="bottom",
-        fontsize=12,
-        fontstyle="italic",
-        color="gray"
-    )
+    add_footer(fig, y=-0.07, fontsize=12)
 
     fig.legend(
         loc="lower center",
@@ -348,7 +341,7 @@ def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_displ
         bbox_to_anchor=(0.5, -0.09)
     )
 
-    match_score = f"{home_team} {home_team_score} - {away_team_score} {away_team}"
+    match_score = f"{turkish_upper(home_team)} {home_team_score} - {away_team_score} {turkish_upper(away_team)}"
     fig.text(0.5, 0.9, match_score, ha="center", va="center", fontsize=16)
 
     axs[0].grid(True, alpha=0.3)

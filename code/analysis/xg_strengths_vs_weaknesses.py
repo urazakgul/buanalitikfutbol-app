@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 from config import change_situations, change_body_parts, PLOT_STYLE
 import matplotlib.pyplot as plt
 
@@ -55,19 +55,12 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
     ax.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.3)
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta {title_suffix}\n{additional_info_text}",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada {title_suffix}\n{additional_info_text}",
         fontsize=14,
+        fontweight="bold",
         pad=35
     )
-    fig.text(
-        0.99, -0.05,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        ha="right",
-        va="bottom",
-        fontsize="medium",
-        fontstyle="italic",
-        color="gray"
-    )
+    add_footer(fig)
     ax.set_xlabel("")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.03), ncol=2, frameon=False, fontsize=10)
 

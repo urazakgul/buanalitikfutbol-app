@@ -2,8 +2,10 @@ import os
 import pandas as pd
 import streamlit as st
 from config import team_list, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 import matplotlib.patches as mpatches
+import matplotlib.ticker as ticker
+from matplotlib.ticker import MultipleLocator
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
@@ -63,8 +65,9 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, las
                 fontsize="large"
             )
             fig.suptitle(
-                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ve Gol",
+                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımlara Göre Kümülatif xG ve Gol",
                 fontsize=24,
+                fontweight="bold",
                 y=1.02
             )
         elif plot_type == "Kümülatif xG ve Gol Farkı (Haftalık Seri)":
@@ -111,13 +114,17 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, las
             )
 
             fig.suptitle(
-                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımlara Göre Kümülatif xG ile Gol Farkı",
+                f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımlara Göre Kümülatif xG ile Gol Farkı",
                 fontsize=24,
+                fontweight="bold",
                 y=1.02
             )
 
         ax.set_title(team)
         ax.grid(True)
+
+        ax.xaxis.set_major_locator(MultipleLocator(3))
+        ax.xaxis.set_major_formatter(ticker.StrMethodFormatter("{x:.0f}"))
 
         ax.set_xlim(global_x_min, global_x_max)
         ax.set_ylim(global_y_min, global_y_max)
@@ -128,15 +135,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league_display, season_display, las
         fig.delaxes(axes[j])
 
     fig.text(0.5, 0.04, "Hafta", ha="center", va="center", fontsize="large")
-    fig.text(
-        0.99, 0.01,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        ha="right",
-        va="bottom",
-        fontsize="medium",
-        fontstyle="italic",
-        color="gray"
-    )
+    add_footer(fig, y=0.02, fontsize=12)
 
     plt.tight_layout(rect=[0, 0.05, 1, 1])
 

@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 from config import PLOT_STYLE
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
@@ -31,49 +31,17 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, 
         ab = AnnotationBbox(getImage(logo_path), (row["xgDiff"], row["xgConcededDiff"]), frameon=False)
         ax.add_artist(ab)
 
-    ax.set_xlabel("Gerçekleşen - xG", labelpad=20, fontsize=12)
-    ax.set_ylabel("Gerçekleşen - xGA", labelpad=20, fontsize=12)
+    ax.set_xlabel("Gerçekleşen - xG (Daha büyük daha iyi)", labelpad=20, fontsize=12)
+    ax.set_ylabel("Gerçekleşen - xGA (Daha küçük daha iyi)", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takımların Gerçekleşen ile Beklenen Gol Farkı",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Gerçekleşen ile Beklenen Gol Farkı",
         fontsize=16,
-        pad=75
+        fontweight="bold",
+        pad=40
     )
     ax.grid(True, linestyle="--", alpha=0.7)
 
-    fig.text(
-        0.99, -0.1,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com\nKümülatif değerlerdir.",
-        horizontalalignment="right",
-        verticalalignment="bottom",
-        fontsize=10,
-        fontstyle="italic",
-        color="gray"
-    )
-
-    offset = 2.5
-    annotations = [
-        ("İyi Defans\nİyi Hücum",
-         xg_xga_gerceklesen_teams["xgDiff"].max(),
-         xg_xga_gerceklesen_teams["xgConcededDiff"].min() - offset),
-        ("İyi Defans\nKötü Hücum",
-         xg_xga_gerceklesen_teams["xgDiff"].min(),
-         xg_xga_gerceklesen_teams["xgConcededDiff"].min() - offset),
-        ("Kötü Defans\nİyi Hücum",
-         xg_xga_gerceklesen_teams["xgDiff"].max(),
-         xg_xga_gerceklesen_teams["xgConcededDiff"].max() + offset),
-        ("Kötü Defans\nKötü Hücum",
-         xg_xga_gerceklesen_teams["xgDiff"].min(),
-         xg_xga_gerceklesen_teams["xgConcededDiff"].max() + offset)
-    ]
-
-    for text, x, y in annotations:
-        ax.text(
-            x, y, text,
-            horizontalalignment="center",
-            verticalalignment="center",
-            fontsize=12,
-            bbox=dict(facecolor="none", edgecolor="none")
-        )
+    add_footer(fig)
 
     ax.invert_yaxis()
 

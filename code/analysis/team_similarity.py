@@ -1,5 +1,5 @@
 from config import match_performance_translations, match_stats_group_name_translations
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 from config import PLOT_STYLE
 import os
 import pandas as pd
@@ -122,20 +122,24 @@ def create_team_similarity_plot(similarity_df, team, league_display, season_disp
     ax.set_ylabel("")
     title = f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada {team} için Benzer Takımlar"
     subtitle = f"{similarity_algorithm} Algoritmasına ve {', '.join(selected_categories)} Kategorisine Göre"
-    ax.set_title(title, fontsize=16, pad=30)
-    ax.text(
-        0.5, 1.02, subtitle, fontsize=8, fontstyle="italic", color="gray", ha="center", va="bottom", transform=ax.transAxes
+    ax.set_title(
+        title,
+        fontsize=14,
+        fontweight="bold",
+        pad=30
     )
-
-    fig.text(
-        0.99, -0.03,
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        horizontalalignment="right",
-        verticalalignment="bottom",
+    ax.text(
+        0.5, 1.02,
+        subtitle,
         fontsize=10,
         fontstyle="italic",
-        color="gray"
+        color="gray",
+        ha="center",
+        va="bottom",
+        transform=ax.transAxes
     )
+
+    add_footer(fig, y=-0.03)
 
     ax.axvline(x=0, color="black", linewidth=1, alpha=0.3)
 

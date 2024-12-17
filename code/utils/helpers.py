@@ -25,14 +25,19 @@ def add_download_button(fig, file_name: str = "grafik.png") -> str:
     """
     return download_button
 
-def add_footer_text(ax: Axes, footer_text: str = "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com") -> None:
-    ax.text(
-        1, -0.15, footer_text,
-        transform=ax.transAxes,
-        fontsize=10,
+def add_footer(fig, data_source="SofaScore", prepared_by="@urazdev", extra_text=None, x=0.99, y=-0.05, fontsize=10, ha="right"):
+    footer_text = f"Veri: {data_source}\nHazırlayan: {prepared_by}"
+    if extra_text:
+        footer_text += f"\n{extra_text}"
+
+    fig.text(
+        x, y,
+        footer_text,
+        ha=ha,
+        va="bottom",
+        fontsize=fontsize,
         fontstyle="italic",
-        color="gray",
-        ha="right"
+        color="gray"
     )
 
 @st.cache_data(show_spinner=False)
@@ -74,3 +79,7 @@ def get_user_selection(team_list, change_situations, change_body_parts, include_
         body_part_type = body_part_display if body_part_display != "Hepsi" else None
 
     return league, season, team, league_display, season_display, situation_type, body_part_type
+
+def turkish_upper(text):
+    replacements = {"i": "İ", "ı": "I", "ş": "Ş", "ğ": "Ğ", "ç": "Ç", "ö": "Ö", "ü": "Ü"}
+    return ''.join(replacements.get(char, char.upper()) for char in text)

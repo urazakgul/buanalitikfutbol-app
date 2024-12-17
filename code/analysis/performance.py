@@ -33,7 +33,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=possession_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Topa Sahip Olma Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Topa Sahip Olma Oranı",
             xlabel="Topa Sahip Olma Oranı (%) (Medyan)",
             ylabel="",
             ordered_labels=sorted_team_names,
@@ -57,7 +57,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_passing_stats,
             stat_columns=["İsabetli Paslar", "İsabetsiz Paslar"],
             total_column="Toplam Pas",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Pas Başarısı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Pas Başarısı",
             xlabel="Pas Sayısı",
             ylabel="",
             colors={"İsabetli Paslar": "#4169E1", "İsabetsiz Paslar": "#CD5C5C"},
@@ -85,7 +85,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_big_chances_stats,
             stat_columns=["Gol Olan Büyük Fırsatlar", "Kaçırılan Büyük Fırsatlar"],
             total_column="Toplam Büyük Fırsat",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Büyük Fırsatları Değerlendirme Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Büyük Fırsatları Değerlendirme Oranı",
             xlabel="Büyük Fırsat Sayısı",
             ylabel="",
             colors={
@@ -122,7 +122,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_shooting_stats,
             stat_columns=shooting_categories,
             total_column="Toplam Şut",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Şut Başarısı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Şut Başarısı",
             xlabel="Şut Sayısı",
             ylabel="",
             colors={
@@ -133,7 +133,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             },
             filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
         )
-    elif subcategory == "Ceza Sahası İçi/Dışı Oranı":
+    elif subcategory == "Ceza Sahası İçi/Dışı Şut Oranı":
         penalty_area_shooting_data = result_all_stats_df[
             result_all_stats_df["stat_name"].isin(["Ceza Sahası İçinden Şutlar", "Ceza Sahası Dışından Şutlar"])
         ]
@@ -159,7 +159,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_penalty_area_stats,
             stat_columns=shooting_categories,
             total_column="Toplam Şut",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Ceza Sahasına Göre Şut Tercih Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasına Göre Şut Tercih Oranı",
             xlabel="Şut Sayısı",
             ylabel="",
             colors={
@@ -177,7 +177,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=penalty_area_touch_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Ceza Sahasında Topla Buluşma Sayıları",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasında Topla Buluşma Sayıları",
             xlabel="Ceza Sahasında Topla Buluşma Sayısı",
             ylabel="",
             filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
@@ -196,7 +196,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=final_third_entry_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Üçüncü Bölgeye Giriş Sayısı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölgeye Giriş Sayısı",
             xlabel="Üçüncü Bölgeye Giriş Sayısı",
             ylabel="",
             filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
@@ -227,7 +227,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_final_third_actions,
             stat_columns=["Başarılı Aksiyon", "Başarısız Aksiyon"],
             total_column="Toplam Aksiyon",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Üçüncü Bölge Aksiyon Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölge Aksiyon Oranı",
             xlabel="Üçüncü Bölge Aksiyon Sayısı",
             ylabel="",
             colors={
@@ -238,7 +238,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             sort_by="Toplam Aksiyon",
             ascending=True
         )
-    elif subcategory == "Yaptığı/Kendisine Yapılan Faul Sayısı":
+    elif subcategory == "Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı":
         foul_data = master_df[master_df["name"] == "Fauller"]
 
         fouls_home = foul_data.groupby("home_team").agg(
@@ -266,8 +266,8 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=total_fouls_summary,
             x="Faul Farkı",
             y="team",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Yaptığı/Kendisine Yapılan Faul Sayısı Farkı",
-            xlabel="Yaptığı/Kendisine Yapılan Faul Sayısı Farkı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı",
+            xlabel="Faul Sayısı Farkı",
             ylabel="",
             filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
             calculate_percentages=False,
@@ -309,7 +309,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=merged_data,
             x="Faul Başına Kart Sayısı",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Yaptığı Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
             xlabel="Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
             ylabel="",
             filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
@@ -338,7 +338,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=grouped_long_pass_data,
             stat_columns=["Başarılı Uzun Pas", "Başarısız Uzun Pas"],
             total_column="Toplam Uzun Pas",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Başarılı ve Başarısız Uzun Pas Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Uzun Pas Oranı",
             xlabel="Uzun Pas Sayısı",
             ylabel="",
             colors={
@@ -368,7 +368,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=grouped_crossing_data,
             stat_columns=["Başarılı Orta", "Başarısız Orta"],
             total_column="Toplam Orta",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta:\nTakımların Başarılı ve Başarısız Orta Oranı",
+            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Orta Oranı",
             xlabel="Orta Sayısı",
             ylabel="",
             colors={

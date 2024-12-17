@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from config import change_situations, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, turkish_upper
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
@@ -51,50 +51,59 @@ def create_shot_location_plot(df_goals, df_non_goals, team_name, league_display,
 
     title_suffix = f" ({situation_type})" if situation_type else ""
     ax.text(
-        x=50,
-        y=110,
+        0.5, 1.07,
         s=(
-            f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Takım Şut Lokasyonları\n"
-            f"{team_name} {title_suffix}"
+            f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takım Şut Lokasyonları"
         ),
-        size=18,
+        size=16,
+        fontweight="bold",
         va="center",
-        ha="center"
+        ha="center",
+        transform=ax.transAxes
+    )
+
+    ax.text(
+        0.5, 1.045,
+        f"{turkish_upper(team_name)}",
+        fontsize=12,
+        fontweight="bold",
+        ha="center",
+        va="center",
+        transform=ax.transAxes
     )
 
     if situation_type is None:
         ax.text(
-            x=50,
-            y=105,
+            0.5, 1.02,
             s=(
-                f"Şut Dönüşüm Oranı: %{conversion_rate:.1f} (Penaltı Dahil), %{non_penalty_conversion_rate:.1f} (Penaltı Hariç)"
+                f"Şut Dönüşüm Oranı{title_suffix}: %{conversion_rate:.1f} (Penaltı Dahil), %{non_penalty_conversion_rate:.1f} (Penaltı Hariç)"
             ),
             size=12,
             va="center",
-            ha="center"
+            ha="center",
+            transform=ax.transAxes
         )
     else:
         ax.text(
-            x=50,
-            y=105,
+            0.5, 1.02,
             s=(
-                f"Şut Dönüşüm Oranı: %{conversion_rate:.1f}"
+                f"Şut Dönüşüm Oranı{title_suffix}: %{conversion_rate:.1f}"
             ),
             size=12,
             va="center",
-            ha="center"
+            ha="center",
+            transform=ax.transAxes
         )
 
-    y_axis_direction = 22 if situation_type else 24
     ax.text(
-        x=50,
-        y=y_axis_direction,
-        s="Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
+        0.5, 0.24,
+        s="Veri: SofaScore\nHazırlayan: @urazdev",
         size=16,
         color=pitch.line_color,
         fontstyle="italic",
         va="center",
-        ha="center"
+        ha="center",
+        transform=ax.transAxes
     )
 
     ax.legend(

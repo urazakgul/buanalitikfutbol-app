@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from config import change_situations, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
@@ -50,29 +50,32 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
     non_penalty_conversion_rate = len(non_penalty_goals) / non_penalty_shots * 100 if non_penalty_shots > 0 else 0
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Hafta Oyuncu Şut Lokasyonları\n{player_name} ({team_name})",
+        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Oyuncu Şut Lokasyonları",
         fontsize=16,
+        fontweight="bold",
         y=1.05
     )
-
-    fig.suptitle(
-        "Veri: SofaScore\nHesaplamalar ve Grafik: buanalitikfutbol.com",
-        y=0,
-        x=0.5,
+    ax.text(
+        0.5, 1.04,
+        f"{turkish_upper(player_name)} ({turkish_upper(team_name)})",
         fontsize=12,
-        fontstyle="italic",
-        color="gray"
+        fontweight="bold",
+        ha="center",
+        va="center",
+        transform=ax.transAxes
     )
 
+    add_footer(fig, x=0.5, y=0, ha="center")
+
     ax.text(
-        x=50,
-        y=105,
+        0.5, 1.02,
         s=(
             f"Şut Dönüşüm Oranı: %{conversion_rate:.1f} (Penaltı Dahil), %{non_penalty_conversion_rate:.1f} (Penaltı Hariç)"
         ),
         size=12,
         va="center",
-        ha="center"
+        ha="center",
+        transform=ax.transAxes
     )
 
     ax.legend(
