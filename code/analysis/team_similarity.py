@@ -263,7 +263,7 @@ def main(league, season, team, league_display, season_display, selected_categori
         create_team_similarity_plot(similarity_df, team, league_display, season_display, last_round, selected_categories, similarity_algorithm)
 
     except Exception as e:
-        st.error(f"Uygun veri bulunamadı. {e}")
+        st.error("Uygun veri bulunamadı.")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">

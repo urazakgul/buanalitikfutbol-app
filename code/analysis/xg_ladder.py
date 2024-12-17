@@ -382,7 +382,7 @@ def main(league, season, league_display, season_display, selected_round, home_te
         create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_display, season_display, home_team, away_team, selected_round)
 
     except Exception as e:
-        st.error(f"Uygun veri bulunamadı. {e}")
+        st.error("Uygun veri bulunamadı.")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">

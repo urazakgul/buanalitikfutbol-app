@@ -436,7 +436,7 @@ def main(subcategory, league, season, league_display, season_display):
         create_performance_plot(master_df, result_all_stats_df, subcategory, league_display, season_display, last_round)
 
     except Exception as e:
-        st.error("Uygun veri bulunamadı.")
+        st.error(f"Uygun veri bulunamadı. {e}")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">

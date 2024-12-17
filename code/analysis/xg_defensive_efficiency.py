@@ -117,7 +117,7 @@ def main(league, season, league_display, season_display):
         create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, last_round)
 
     except Exception as e:
-        st.error(f"Uygun veri bulunamadı. {e}")
+        st.error("Uygun veri bulunamadı.")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">
