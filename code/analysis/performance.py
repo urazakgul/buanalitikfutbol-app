@@ -239,7 +239,12 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             ascending=True
         )
     elif subcategory == "Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı":
-        foul_data = master_df[master_df["name"] == "Fauller"]
+        foul_data = master_df[master_df["name"] == "Fauller"].copy()
+
+        foul_data["home_team_stats"] = pd.to_numeric(foul_data["home_team_stats"], errors="coerce")
+        foul_data["away_team_stats"] = pd.to_numeric(foul_data["away_team_stats"], errors="coerce")
+
+        foul_data = foul_data.dropna(subset=["home_team_stats", "away_team_stats"])
 
         fouls_home = foul_data.groupby("home_team").agg(
             Yaptigi=("home_team_stats", "sum"),
