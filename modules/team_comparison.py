@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 from code.analysis.xg_time_series import main as xg_time_series_main
 from code.analysis.xg_actual_vs_expected import main as xg_actual_vs_expected_main
@@ -6,13 +5,14 @@ from code.analysis.xg_strengths_vs_weaknesses import main as xg_strengths_vs_wea
 from code.analysis.xg_defensive_efficiency import main as xg_defensive_efficiency_main
 from code.analysis.performance import main as performance_main
 from code.analysis.team_similarity import main as team_similarity_main
+from code.analysis.goal_creation_patterns import main as goal_creation_patterns_main
 from code.utils.helpers import get_user_selection
 from config import match_performances, match_stats_group_name
 
 def display_team_comparison(team_list, change_situations, change_body_parts):
     section = st.sidebar.radio(
         "Kategori:",
-        options=["xG (Beklenen Gol)", "Maç Performansı", "Benzerlik"],
+        options=["xG (Beklenen Gol)", "Maç Performansı", "Benzerlik", "Gol Üretim Şekilleri"],
         index=None,
         label_visibility='hidden'
     )
@@ -189,3 +189,35 @@ def display_team_comparison(team_list, change_situations, change_body_parts):
                         selected_categories,
                         similarity_algorithm
                     )
+
+    elif section == "Gol Üretim Şekilleri":
+        league, season, _, league_display, season_display, _, _ = get_user_selection(
+            team_list,
+            change_situations,
+            change_body_parts,
+            include_situation_type=False,
+            include_team=False,
+            include_body_part=False,
+            key_prefix="performance_section"
+        )
+
+        category = st.sidebar.selectbox(
+            "Gol Üretim Şekli:",
+            ["Seçin", "Senaryo", "Vücut Parçası", "Zaman Dilimi", "Kale Lokasyonu", "Oyuncu Pozisyonu", "İç Saha-Deplasman"],
+            key="goal_type_category"
+        )
+
+        if category == "Seçin":
+            st.warning("Lütfen bir gol üretim şekli seçin.")
+        else:
+            subcategory = st.sidebar.selectbox(
+                f"Gol Payı Tipi:",
+                ["Seçin", "Takım Payına Göre", "Takımlar Arası Paya Göre"],
+                key=f"goal_type_{category}_subcategory"
+            )
+
+            if subcategory == "Seçin":
+                st.warning("Lütfen bir gol payı tipi seçin.")
+            else:
+                with st.spinner("İçerik hazırlanıyor..."):
+                    goal_creation_patterns_main(category, subcategory, league, season, league_display, season_display)

@@ -27,7 +27,7 @@ load_styles()
 def run_app():
     general_section = option_menu(
         menu_title=None,
-        options=["Ana Sayfa", "Takım", "Oyuncu", "Maç", "Hakkında"],
+        options=["Ana Sayfa", "Takım", "Oyuncu", "Maç", "Metaveri"],
         icons=["house", "shield", "person", "calendar", "info-circle"],
         menu_icon="cast",
         default_index=0,

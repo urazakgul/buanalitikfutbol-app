@@ -83,3 +83,16 @@ def get_user_selection(team_list, change_situations, change_body_parts, include_
 def turkish_upper(text):
     replacements = {"i": "İ", "ı": "I", "ş": "Ş", "ğ": "Ğ", "ç": "Ç", "ö": "Ö", "ü": "Ü"}
     return ''.join(replacements.get(char, char.upper()) for char in text)
+
+def turkish_sort_key():
+    turkish_alphabet = "AaBbCcÇçDdEeFfGgĞğHhIıİiJjKkLlMmNnOoÖöPpRrSsŞşTtUuÜüVvYyZz"
+    turkish_sort_order = {char: idx for idx, char in enumerate(turkish_alphabet)}
+
+    def sort_function(text):
+        return [turkish_sort_order.get(char, -1) for char in text]
+
+    return sort_function
+
+def sort_turkish(df, column):
+    sort_key = turkish_sort_key()
+    return df.sort_values(by=column, key=lambda col: col.map(sort_key))

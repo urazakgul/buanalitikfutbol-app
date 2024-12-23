@@ -64,6 +64,30 @@ change_body_parts = {
     "other":"Diğer"
 }
 
+change_goal_locations = {
+    "high-centre": "Üst-Orta",
+    "high-left": "Üst-Sol",
+    "high-right": "Üst-Sağ",
+    "low-centre": "Alt-Orta",
+    "low-left": "Alt-Sol",
+    "low-right": "Alt-Sağ",
+    "close-right": "Yakın-Sağ",
+    "close-left": "Yakın-Sol",
+    "close-high": "Yakın-Üst",
+    "close-high-right": "Yakın-Üst-Sağ",
+    "close-high-left": "Yakın-Üst-Sol",
+    "left": "Sol",
+    "right": "Sağ",
+    "high": "Üst"
+}
+
+change_player_positions = {
+    "F": "Forvet",
+    "M": "Orta Saha",
+    "D": "Defans",
+    "G": "Kaleci"
+}
+
 match_performances = [
     "Topa Sahip Olma",
     "Pas Başarısı",
