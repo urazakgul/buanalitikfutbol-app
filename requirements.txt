@@ -8,3 +8,4 @@ streamlit
 st-social-media-links
 streamlit_option_menu
 scikit-learn
+unidecode
