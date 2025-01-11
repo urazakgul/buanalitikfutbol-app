@@ -22,12 +22,12 @@ hr {
 }
 
 .download-button {
-    background-color: #388E3C;
+    background-color: #262730;
     border: none;
     color: white !important;
     padding: 10px 20px;
     text-align: center;
-    text-decoration: none;
+    text-decoration: none !important;
     display: inline-block;
     font-size: 16px;
     font-weight: bold;
@@ -37,8 +37,8 @@ hr {
 }
 
 .download-button:hover {
-    background-color: #45a049;
-    text-decoration: none;
+    background-color: #ffa726;
+    text-decoration: none !important;
 }
 
 .error-button {

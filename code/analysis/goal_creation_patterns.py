@@ -2,13 +2,13 @@ import os
 import pandas as pd
 import streamlit as st
 from config import change_situations, change_body_parts, change_goal_locations, change_player_positions, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, sort_turkish
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, sort_turkish, turkish_english_lower
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_goal_share_plot(team_goal_types_df, category, category_en, subcategory, league_display, season_display, last_round):
+def create_goal_share_plot(team_goal_types_df, category, category_en, subcategory, league, season, league_display, season_display, last_round):
     heatmap_data = team_goal_types_df.pivot(
         index="team_name",
         columns=category_en,
@@ -35,7 +35,7 @@ def create_goal_share_plot(team_goal_types_df, category, category_en, subcategor
 
     title_suffix = "Takım Payına (%) Göre Gol Üretim Şekli" if subcategory == "Takım Payına Göre" else "Takımlar Arası Paya (%) Göre Gol Üretim Şekli"
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada {title_suffix} ({category})",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada {title_suffix} ({category})",
         fontsize=12,
         fontweight="bold",
         pad=30
@@ -47,18 +47,19 @@ def create_goal_share_plot(team_goal_types_df, category, category_en, subcategor
     plt.tight_layout()
     add_footer(fig, y=-0.01, extra_text="Rakibin kendi kalesine attığı goller çıkarılmıştır.")
 
-    file_name = f"{league_display}_{season_display}_{last_round}_{subcategory} Gol Tipleri_{category}.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}_gol_tipleri_{turkish_english_lower(category)}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(category=None, subcategory=None, league=None, season=None, league_display=None, season_display=None):
+def main(category, subcategory, league, season, league_display, season_display):
     try:
+
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
-        matches_data = matches_data[["season", "round", "game_id", "home_team", "away_team"]]
+        games_data = games_data[["season", "round", "game_id", "home_team", "away_team"]]
 
         shot_maps_data = shot_maps_data[[
             "season", "round", "game_id", "player_name", "player_position", "is_home", "shot_type", "body_part", "goal_type",
@@ -66,7 +67,7 @@ def main(category=None, subcategory=None, league=None, season=None, league_displ
         ]]
 
         shot_maps_data = shot_maps_data.merge(
-            matches_data,
+            games_data,
             on=["season", "round", "game_id"],
             how="left"
         )
@@ -123,7 +124,7 @@ def main(category=None, subcategory=None, league=None, season=None, league_displ
                     .melt(id_vars=["team_name"], var_name="situation", value_name="team_share")
                 )
 
-        elif category == "Vücut Parçası":
+        elif category == "Vücut Bölgesi":
             category_en = "body_part"
             if subcategory == "Takım Payına Göre":
                 team_goal_types_df = (
@@ -332,9 +333,19 @@ def main(category=None, subcategory=None, league=None, season=None, league_displ
                     .melt(id_vars=["team_name"], var_name="is_home", value_name="team_share")
                 )
 
-        last_round = matches_data['round'].max()
+        last_round = games_data['round'].max()
 
-        create_goal_share_plot(team_goal_types_df, category, category_en, subcategory, league_display, season_display, last_round)
+        create_goal_share_plot(
+            team_goal_types_df,
+            category,
+            category_en,
+            subcategory,
+            league,
+            season,
+            league_display,
+            season_display,
+            last_round
+        )
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

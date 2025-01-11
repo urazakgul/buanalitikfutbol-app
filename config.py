@@ -24,27 +24,50 @@ event_colors = {
     "Kaçırma": "#AAAAAA"
 }
 
-team_list = [
-    "Adana Demirspor",
-    "Alanyaspor",
-    "Antalyaspor",
-    "Beşiktaş",
-    "Bodrum",
-    "Çaykur Rizespor",
-    "Eyüpspor",
-    "Fenerbahçe",
-    "Galatasaray",
-    "Gaziantep",
-    "Göztepe",
-    "Hatayspor",
-    "İstanbul Başakşehir",
-    "Kasımpaşa",
-    "Kayserispor",
-    "Konyaspor",
-    "Samsunspor",
-    "Sivasspor",
-    "Trabzonspor"
-]
+team_list_by_season = {
+    "2425": [
+        "Adana Demirspor",
+        "Alanyaspor",
+        "Antalyaspor",
+        "Beşiktaş",
+        "Bodrum",
+        "Çaykur Rizespor",
+        "Eyüpspor",
+        "Fenerbahçe",
+        "Galatasaray",
+        "Gaziantep",
+        "Göztepe",
+        "Hatayspor",
+        "İstanbul Başakşehir",
+        "Kasımpaşa",
+        "Kayserispor",
+        "Konyaspor",
+        "Samsunspor",
+        "Sivasspor",
+        "Trabzonspor"
+    ],
+    "2324": [
+        "Adana Demirspor",
+        "Alanyaspor",
+        "Antalyaspor",
+        "Beşiktaş",
+        "Çaykur Rizespor",
+        "Fenerbahçe",
+        "Galatasaray",
+        "Gaziantep",
+        "Hatayspor",
+        "İstanbul Başakşehir",
+        "İstanbulspor",
+        "Kasımpaşa",
+        "Kayserispor",
+        "Konyaspor",
+        "MKE Ankaragücü",
+        "Pendikspor",
+        "Samsunspor",
+        "Sivasspor",
+        "Trabzonspor"
+    ]
+}
 
 change_situations = {
     "assisted":"Asiste Edilen",
@@ -155,7 +178,71 @@ match_performance_translations = {
     "Penalty saves": "Penaltı Kurtarışları"
 }
 
-match_stats_group_name = [
+match_performance_binary = [
+    "Üçüncü Bölge Aşaması",
+    "Uzun Paslar",
+    "Ortalar",
+    "Yer Mücadeleleri",
+    "Hava Topu Mücadeleleri",
+    "Çalımlar"
+]
+
+match_performance_posneg = {
+    "Pozitif": [
+        "Topa Sahip Olma",
+        "Beklenen Goller",
+        "Büyük Fırsatlar",
+        "Toplam Şutlar",
+        "Kaleci Kurtarışları",
+        "Köşe Vuruşları",
+        "Paslar",
+        "Müdahaleler",
+        "Serbest Vuruşlar",
+        "İsabetli Şutlar",
+        "Bloke Edilen Şutlar",
+        "Ceza Sahası İçinden Şutlar",
+        "Ceza Sahası Dışından Şutlar",
+        "Ara Paslar",
+        "Üçüncü Bölgede Faul Yapılan",
+        "İsabetli Paslar",
+        "Taç Atışları",
+        "Üçüncü Bölgeye Girişler",
+        "Uzun Paslar",
+        "Ortalar",
+        "İkili Mücadeleler",
+        "Yer Mücadeleleri",
+        "Hava Topu Mücadeleleri",
+        "Çalımlar",
+        "Kazanılan Müdahaleler",
+        "Toplam Müdahaleler",
+        "Top Kesmeler",
+        "Top Kazanımları",
+        "Uzaklaştırmalar",
+        "Toplam Kurtarışlar",
+        "Önlenen Goller",
+        "Kale Vuruşları",
+        "Gol Olan Büyük Fırsatlar",
+        "Ceza Sahasında Topla Buluşma",
+        "Üçüncü Bölge Aşaması",
+        "Büyük Kurtarışlar",
+        "Yüksek Topları Alma",
+        "Yumruklamalar",
+        "Penaltı Kurtarışları"
+    ],
+    "Negatif": [
+        "Fauller",
+        "Sarı Kartlar",
+        "İsabetsiz Şutlar",
+        "Kaçırılan Büyük Fırsatlar",
+        "Ofsaytlar",
+        "Top Kayıpları",
+        "Kırmızı Kartlar",
+        "Şuta Neden Olan Hatalar",
+        "Gole Neden Olan Hatalar"
+    ]
+}
+
+game_stats_group_name = [
     "Genel Görünüm",
     "Şutlar",
     "Hücum",
@@ -165,7 +252,7 @@ match_stats_group_name = [
     "Kalecilik"
 ]
 
-match_stats_group_name_translations = {
+game_stats_group_name_translations = {
     "Match overview": "Genel Görünüm",
     "Shots": "Şutlar",
     "Attack": "Hücum",

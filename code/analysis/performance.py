@@ -1,6 +1,6 @@
 from config import match_performance_translations
 from code.utils.plotters import plot_boxplot, plot_stacked_bar_chart, plot_stacked_horizontal_bar, plot_horizontal_bar
-from code.utils.helpers import load_filtered_json_files
+from code.utils.helpers import load_filtered_json_files, turkish_english_lower
 import os
 import pandas as pd
 import streamlit as st
@@ -20,7 +20,7 @@ def clean_parenthesis_columns(dataframe, columns_to_check, target_columns):
                     dataframe.at[index, col] = row[col].split("(")[0].strip()
     return dataframe
 
-def create_performance_plot(master_df, result_all_stats_df, subcategory, league_display, season_display, last_round):
+def create_performance_plot(master_df, result_all_stats_df, subcategory, league, season, league_display, season_display, last_round):
     if subcategory == "Topa Sahip Olma":
         possession_data = result_all_stats_df[result_all_stats_df["stat_name"] == "Topa Sahip Olma"]
 
@@ -33,11 +33,11 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=possession_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Topa Sahip Olma Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Topa Sahip Olma Oranı",
             xlabel="Topa Sahip Olma Oranı (%) (Medyan)",
             ylabel="",
             ordered_labels=sorted_team_names,
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png"
         )
     elif subcategory == "Pas Başarısı":
         passing_data = result_all_stats_df[result_all_stats_df["stat_name"].isin(["Paslar", "İsabetli Paslar"])]
@@ -57,13 +57,13 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_passing_stats,
             stat_columns=["İsabetli Paslar", "İsabetsiz Paslar"],
             total_column="Toplam Pas",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Pas Başarısı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Pas Başarısı",
             xlabel="Pas Sayısı",
             ylabel="",
             colors={"İsabetli Paslar": "#4169E1", "İsabetsiz Paslar": "#CD5C5C"},
             sort_by="Toplam Pas",
             ascending=True,
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png"
         )
     elif subcategory == "Gol Olan/Kaçırılan Büyük Fırsatlar":
         big_chances_data = result_all_stats_df[
@@ -85,14 +85,14 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_big_chances_stats,
             stat_columns=["Gol Olan Büyük Fırsatlar", "Kaçırılan Büyük Fırsatlar"],
             total_column="Toplam Büyük Fırsat",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Büyük Fırsatları Değerlendirme Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Büyük Fırsatları Değerlendirme Oranı",
             xlabel="Büyük Fırsat Sayısı",
             ylabel="",
             colors={
                 "Gol Olan Büyük Fırsatlar": "#4169E1",
                 "Kaçırılan Büyük Fırsatlar": "#CD5C5C"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png"
         )
     elif subcategory == "Şut Başarısı":
         shooting_data = result_all_stats_df[
@@ -122,7 +122,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_shooting_stats,
             stat_columns=shooting_categories,
             total_column="Toplam Şut",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Şut Başarısı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Şut Başarısı",
             xlabel="Şut Sayısı",
             ylabel="",
             colors={
@@ -131,7 +131,7 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
                 "Bloke Edilen Şutlar": "#FFA07A",
                 "Direğe Çarpan Şutlar": "#FFD700"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png"
         )
     elif subcategory == "Ceza Sahası İçi/Dışı Şut Oranı":
         penalty_area_shooting_data = result_all_stats_df[
@@ -159,14 +159,14 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_penalty_area_stats,
             stat_columns=shooting_categories,
             total_column="Toplam Şut",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasına Göre Şut Tercih Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasına Göre Şut Tercih Oranı",
             xlabel="Şut Sayısı",
             ylabel="",
             colors={
                 "Ceza Sahası İçinden Şutlar": "#4169E1",
                 "Ceza Sahası Dışından Şutlar": "#CD5C5C"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png"
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png"
         )
     elif subcategory == "Ceza Sahasında Topla Buluşma":
         penalty_area_touch_data = result_all_stats_df[
@@ -177,10 +177,10 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=penalty_area_touch_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasında Topla Buluşma Sayıları",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Ceza Sahasında Topla Buluşma Sayıları",
             xlabel="Ceza Sahasında Topla Buluşma Sayısı",
             ylabel="",
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             sort_by="stat_value",
             ascending=True,
             calculate_percentages=False,
@@ -196,10 +196,10 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=final_third_entry_data,
             x="stat_value",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölgeye Giriş Sayısı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölgeye Giriş Sayısı",
             xlabel="Üçüncü Bölgeye Giriş Sayısı",
             ylabel="",
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league}_{season}_{last_round}_{turkish_english_lower(subcategory)}.png",
             sort_by="stat_value",
             ascending=True,
             calculate_percentages=False,
@@ -227,14 +227,14 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=team_final_third_actions,
             stat_columns=["Başarılı Aksiyon", "Başarısız Aksiyon"],
             total_column="Toplam Aksiyon",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölge Aksiyon Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Üçüncü Bölge Aksiyon Oranı",
             xlabel="Üçüncü Bölge Aksiyon Sayısı",
             ylabel="",
             colors={
                 "Başarılı Aksiyon": "#4169E1",
                 "Başarısız Aksiyon": "#CD5C5C"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             sort_by="Toplam Aksiyon",
             ascending=True
         )
@@ -271,10 +271,10 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=total_fouls_summary,
             x="Faul Farkı",
             y="team",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı",
             xlabel="Faul Sayısı Farkı",
             ylabel="",
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             calculate_percentages=False,
             sort_by="Faul Farkı",
             ascending=True,
@@ -295,8 +295,10 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
         ].groupby("team_name", as_index=False)["stat_value"].sum().rename(columns={"stat_value": "Kırmızı Kart Sayısı"})
 
         cards_data = pd.merge(
-            yellow_cards_data, red_cards_data,
-            on="team_name", how="outer"
+            yellow_cards_data,
+            red_cards_data,
+            on="team_name",
+            how="outer"
         ).fillna(0)
 
         cards_data["Toplam Kart Sayısı"] = cards_data["Sarı Kart Sayısı"] + cards_data["Kırmızı Kart Sayısı"]
@@ -307,17 +309,16 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
         )
 
         merged_data["Faul Başına Kart Sayısı"] = merged_data["Toplam Kart Sayısı"] / merged_data["Faul Sayısı"]
-
-        merged_data = merged_data.sort_values("Faul Başına Kart Sayısı", ascending=True)
+        merged_data["Faul Başına Kart Sayısı"] = pd.to_numeric(merged_data["Faul Başına Kart Sayısı"], errors="coerce")
 
         plot_horizontal_bar(
             data=merged_data,
             x="Faul Başına Kart Sayısı",
             y="team_name",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Yaptığı Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
             xlabel="Faul Başına Kart (Sarı ve Kırmızı) Sayısı",
             ylabel="",
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             calculate_percentages=False,
             sort_by="Faul Başına Kart Sayısı",
             ascending=True,
@@ -343,14 +344,14 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=grouped_long_pass_data,
             stat_columns=["Başarılı Uzun Pas", "Başarısız Uzun Pas"],
             total_column="Toplam Uzun Pas",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Uzun Pas Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Uzun Pas Oranı",
             xlabel="Uzun Pas Sayısı",
             ylabel="",
             colors={
                 "Başarılı Uzun Pas": "#4169E1",
                 "Başarısız Uzun Pas": "#CD5C5C"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             sort_by="Toplam Uzun Pas",
             ascending=True
         )
@@ -373,31 +374,30 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league_
             data=grouped_crossing_data,
             stat_columns=["Başarılı Orta", "Başarısız Orta"],
             total_column="Toplam Orta",
-            title=f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Orta Oranı",
+            title=f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Başarılı ve Başarısız Orta Oranı",
             xlabel="Orta Sayısı",
             ylabel="",
             colors={
                 "Başarılı Orta": "#4169E1",
                 "Başarısız Orta": "#CD5C5C"
             },
-            filename=f"{league_display}_{season_display}_{last_round}_{subcategory}.png",
+            filename=f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(subcategory)}.png",
             sort_by="Toplam Orta",
             ascending=True
         )
 
 def main(subcategory, league, season, league_display, season_display):
-
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        match_stats_data = load_filtered_json_files(directories, "match_stats", league, season)
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
+        game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
 
-        matches_data = matches_data[["game_id","home_team","away_team"]]
+        games_data = games_data[["game_id","home_team","away_team"]]
 
-        match_stats_data = match_stats_data[match_stats_data["period"] == "ALL"]
-        match_stats_data = match_stats_data.rename(columns={
+        game_stats_data = game_stats_data[game_stats_data["period"] == "ALL"]
+        game_stats_data = game_stats_data.rename(columns={
             "home_team":"home_team_stats",
             "away_team":"away_team_stats"
         })
@@ -406,17 +406,11 @@ def main(subcategory, league, season, league_display, season_display):
         parenthesis_keywords = ["Final third phase", "Long balls", "Crosses", "Ground duels", "Aerial duels", "Dribbles"]
         target_columns = ["home_team_stats", "away_team_stats"]
 
-        match_stats_data = clean_percent_columns(match_stats_data, percent_keywords, target_columns)
-        match_stats_data = clean_parenthesis_columns(match_stats_data, parenthesis_keywords, target_columns)
+        game_stats_data = clean_percent_columns(game_stats_data, percent_keywords, target_columns)
+        game_stats_data = clean_parenthesis_columns(game_stats_data, parenthesis_keywords, target_columns)
 
-        match_stats_data.loc[~match_stats_data["home_team_stats"].str.contains("/", na=False), "home_team_stats"] = \
-            pd.to_numeric(match_stats_data["home_team_stats"], errors="coerce")
-
-        match_stats_data.loc[~match_stats_data["away_team_stats"].str.contains("/", na=False), "away_team_stats"] = \
-            pd.to_numeric(match_stats_data["away_team_stats"], errors="coerce")
-
-        master_df = match_stats_data.merge(
-            matches_data,
+        master_df = game_stats_data.merge(
+            games_data,
             on="game_id"
         )
 
@@ -436,9 +430,12 @@ def main(subcategory, league, season, league_display, season_display):
         result_all_stats_df = pd.concat(all_stats_df_list, ignore_index=True)
         result_all_stats_df = result_all_stats_df.reset_index(drop=True)
 
+        result_all_stats_df.loc[~result_all_stats_df["stat_value"].str.contains("/", na=False), "stat_value"] = \
+            pd.to_numeric(result_all_stats_df["stat_value"], errors="coerce")
+
         last_round = master_df["round"].max()
 
-        create_performance_plot(master_df, result_all_stats_df, subcategory, league_display, season_display, last_round)
+        create_performance_plot(master_df, result_all_stats_df, subcategory, league, season, league_display, season_display, last_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

@@ -3,8 +3,9 @@ import io
 import os
 import glob
 import pandas as pd
+import re
+from unidecode import unidecode
 import streamlit as st
-from matplotlib.axes import Axes
 
 def load_styles():
     with open("assets/style.css") as f:
@@ -42,47 +43,73 @@ def add_footer(fig, data_source="SofaScore", prepared_by="@urazdev", extra_text=
 
 @st.cache_data(show_spinner=False)
 def load_filtered_json_files(directory: str, subdirectory: str, league: str, season: str) -> pd.DataFrame:
-    path = os.path.join(directory, subdirectory, f"{league}_{subdirectory}_{season}.json")
+    path = os.path.join(directory, subdirectory, f"sofascore_{subdirectory}_{league}_{season}.json")
     files = glob.glob(path)
 
     return pd.concat((pd.read_json(file, orient="records", lines=True) for file in files), ignore_index=True)
 
-def get_user_selection(team_list, change_situations, change_body_parts, include_situation_type=True, include_team=True, include_body_part=True, key_prefix=""):
-    league_display = st.sidebar.selectbox(
-        "Lig:", ["Süper Lig"], disabled=True, key=f"{key_prefix}_selectbox_league"
-    )
-    league = "super_lig" if league_display == "Süper Lig" else league_display
+def get_user_selection(team_list_by_season, change_situations, change_body_parts, include_situation_type=True, include_team=True, include_body_part=True, key_prefix=""):
 
-    season_display = st.sidebar.selectbox(
-        "Sezon:", ["2024/25"], disabled=True, key=f"{key_prefix}_selectbox_season"
-    )
-    season = "2425" if season_display == "2024/25" else season_display
+    st.session_state["league_display"] = re.sub(r"\s+", "_", unidecode(st.session_state["selected_league"].lower()))
+    st.session_state["season_display"] = st.session_state["selected_season"].split('/')[0][2:] + st.session_state["selected_season"].split('/')[1]
 
     team = None
     if include_team:
+        team_list = team_list_by_season.get(st.session_state["season_display"], [])
         team = st.sidebar.selectbox(
-            "Takım:", ["Takım seçin"] + team_list, key=f"{key_prefix}_selectbox_team"
+            "Takımlar",
+            team_list,
+            index=None,
+            label_visibility="hidden",
+            placeholder="Takımlar",
+            key=f"{key_prefix}_selectbox_team"
         )
 
     situation_type = None
     if include_situation_type:
         situation_type_display = st.sidebar.selectbox(
-            "Şut Tipi:", ["Hepsi"] + list(change_situations.values()), key=f"{key_prefix}_selectbox_situation"
+            "Senaryo Tipi:",
+            ["Hepsi"] + list(change_situations.values()),
+            index=None,
+            label_visibility="hidden",
+            placeholder="Senaryo Tipleri",
+            key=f"{key_prefix}_selectbox_situation"
         )
-        situation_type = situation_type_display if situation_type_display != "Hepsi" else None
+        situation_type = situation_type_display
 
     body_part_type = None
     if include_body_part:
         body_part_display = st.sidebar.selectbox(
-            "Vücut Parçası Tipi:", ["Hepsi"] + list(change_body_parts.values()), key=f"{key_prefix}_selectbox_body_part"
+            "Vücut Parçası Tipi:",
+            ["Hepsi"] + list(change_body_parts.values()),
+            index=None,
+            label_visibility="hidden",
+            placeholder="Vücut Parçaları",
+            key=f"{key_prefix}_selectbox_body_part"
         )
-        body_part_type = body_part_display if body_part_display != "Hepsi" else None
+        body_part_type = body_part_display
 
-    return league, season, team, league_display, season_display, situation_type, body_part_type
+    return (
+        st.session_state["selected_league"],
+        st.session_state["selected_season"],
+        st.session_state["league_display"],
+        st.session_state["season_display"],
+        team,
+        situation_type,
+        body_part_type
+    )
 
 def turkish_upper(text):
     replacements = {"i": "İ", "ı": "I", "ş": "Ş", "ğ": "Ğ", "ç": "Ç", "ö": "Ö", "ü": "Ü"}
     return ''.join(replacements.get(char, char.upper()) for char in text)
+
+def turkish_english_lower(text):
+    replacements = {
+        "İ": "i", "I": "i", "Ş": "s", "Ğ": "g", "Ç": "c", "Ö": "o", "Ü": "u",
+        "ş": "s", "ğ": "g", "ç": "c", "ö": "o", "ü": "u", "ı": "i"
+    }
+    text = text.replace(' ', '-')
+    return ''.join(replacements.get(char, char.lower()) for char in text)
 
 def turkish_sort_key():
     turkish_alphabet = "AaBbCcÇçDdEeFfGgĞğHhIıİiJjKkLlMmNnOoÖöPpRrSsŞşTtUuÜüVvYyZz"

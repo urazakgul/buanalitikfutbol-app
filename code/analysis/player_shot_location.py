@@ -1,13 +1,13 @@
 import os
 import streamlit as st
 from config import change_situations, PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_display, season_display, last_round, player_name):
+def create_player_shot_location_plot(df_goals, df_non_goals, league, season, league_display, season_display, team, last_round, player_name):
     pitch = VerticalPitch(
         pitch_type="opta",
         corner_arcs=True,
@@ -50,14 +50,14 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
     non_penalty_conversion_rate = len(non_penalty_goals) / non_penalty_shots * 100 if non_penalty_shots > 0 else 0
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Oyuncu Şut Lokasyonları",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada Oyuncu Şut Lokasyonları",
         fontsize=16,
         fontweight="bold",
         y=1.05
     )
     ax.text(
         0.5, 1.04,
-        f"{turkish_upper(player_name)} ({turkish_upper(team_name)})",
+        f"{turkish_upper(player_name)} ({turkish_upper(team)})",
         fontsize=12,
         fontweight="bold",
         ha="center",
@@ -88,19 +88,19 @@ def create_player_shot_location_plot(df_goals, df_non_goals, team_name, league_d
         edgecolor="black"
     )
 
-    file_name = f"{league_display}_{season_display}_{player_name}_{team_name}_Şut Lokasyonları.png"
+    file_name = f"{league_display}_{season_display}_{turkish_english_lower(player_name)}_{turkish_english_lower(team)}_sut_lokasyonlari.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(league=None, season=None, team=None, league_display=None, season_display=None, player=None):
+def main(league, season, league_display, season_display, team, player):
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
-        matches_data = matches_data[["season", "round", "game_id", "home_team", "away_team"]]
+        games_data = games_data[["season", "round", "game_id", "home_team", "away_team"]]
 
         shot_maps_data = shot_maps_data[[
             "season", "round", "game_id", "player_name", "is_home", "shot_type", "situation",
@@ -108,7 +108,7 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         ]]
 
         shot_maps_data = shot_maps_data.merge(
-            matches_data,
+            games_data,
             on=["season", "round", "game_id"],
             how="left"
         )
@@ -128,9 +128,9 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
         df_goals = player_data[player_data["is_goal"] == 1]
         df_non_goals = player_data[player_data["is_goal"] == 0]
 
-        last_round = matches_data['round'].max()
+        last_round = games_data['round'].max()
 
-        create_player_shot_location_plot(df_goals, df_non_goals, team, league_display, season_display, last_round, player)
+        create_player_shot_location_plot(df_goals, df_non_goals, league, season, league_display, season_display, team, last_round, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

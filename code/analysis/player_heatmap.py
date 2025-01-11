@@ -1,13 +1,13 @@
 import os
 import streamlit as st
 from config import PLOT_STYLE
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display, season_display, last_round, player_name):
+def create_player_heatmap_plot(filtered_hmap_data_df, league, season, league_display, season_display, team, last_round, player_name):
 
     pitch = VerticalPitch(
         pitch_type='opta',
@@ -30,13 +30,13 @@ def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display,
     )
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Oyuncu Isı Haritası",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada Oyuncu Isı Haritası",
         fontsize=16,
         fontweight="bold"
     )
     ax.text(
         0.5, 0.99,
-        f"{turkish_upper(player_name)} ({turkish_upper(team_name)})",
+        f"{turkish_upper(player_name)} ({turkish_upper(team)})",
         fontsize=10,
         fontweight="bold",
         ha="center",
@@ -46,22 +46,22 @@ def create_player_heatmap_plot(filtered_hmap_data_df, team_name, league_display,
 
     add_footer(fig, x=0.5, y=0, ha="center")
 
-    file_name = f"{league_display}_{season_display}_{last_round}_{player_name}_{team_name}_Isı Haritası.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(player_name)}_{turkish_english_lower(team)}_isi_haritasi.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(league=None, season=None, team=None, league_display=None, season_display=None, player=None):
+def main(league, season, league_display, season_display, team, player):
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        heatmaps_data = load_filtered_json_files(directories, "heatmaps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        heat_maps_data = load_filtered_json_files(directories, "heat_maps", league_display, season_display)
 
-        matches_data = matches_data[['game_id', 'tournament', 'season', 'round', 'home_team', 'away_team']]
+        games_data = games_data[['game_id', 'tournament', 'season', 'round', 'home_team', 'away_team']]
 
-        hmap_data_df = heatmaps_data.merge(
-            matches_data,
+        hmap_data_df = heat_maps_data.merge(
+            games_data,
             on=['game_id', 'tournament', 'season', 'round'],
             how='left'
         )
@@ -76,9 +76,9 @@ def main(league=None, season=None, team=None, league_display=None, season_displa
             (hmap_data_df['player_name'] == player)
         ]
 
-        last_round = matches_data['round'].max()
+        last_round = games_data['round'].max()
 
-        create_player_heatmap_plot(filtered_hmap_data_df, team, league_display, season_display, last_round, player)
+        create_player_heatmap_plot(filtered_hmap_data_df, league, season, league_display, season_display, team, last_round, player)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

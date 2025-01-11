@@ -1,11 +1,13 @@
-from config import match_performance_translations, match_stats_group_name_translations
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
-from config import PLOT_STYLE
 import os
 import pandas as pd
+import streamlit as st
+from config import match_performance_translations, game_stats_group_name_translations
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
+from config import PLOT_STYLE
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
-import streamlit as st
+from sklearn.decomposition import PCA
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
@@ -80,7 +82,7 @@ def process_exceptions(dataframe, exc_list):
 
     return pd.concat(processed_df_list, ignore_index=True)
 
-def update_match_stats_categories(match_stats_data):
+def update_game_stats_categories(game_stats_data):
     CATEGORY_MAPPINGS = {
         "Topa Sahip Olma": "Paslar",
         "Beklenen Goller": "Hücum",
@@ -96,83 +98,131 @@ def update_match_stats_categories(match_stats_data):
 
     REMOVE_STATS = ["Toplam Şutlar", "Müdahaleler"]
 
-    match_stats_data.loc[
-        (match_stats_data["group_name"] == "Genel Görünüm") &
-        (match_stats_data["name"].isin(CATEGORY_MAPPINGS.keys())),
+    game_stats_data.loc[
+        (game_stats_data["group_name"] == "Genel Görünüm") &
+        (game_stats_data["name"].isin(CATEGORY_MAPPINGS.keys())),
         "group_name"
-    ] = match_stats_data["name"].map(CATEGORY_MAPPINGS)
+    ] = game_stats_data["name"].map(CATEGORY_MAPPINGS)
 
-    match_stats_data = match_stats_data[
+    game_stats_data = game_stats_data[
         ~(
-            (match_stats_data["group_name"] == "Genel Görünüm") &
-            (match_stats_data["name"].isin(REMOVE_STATS))
+            (game_stats_data["group_name"] == "Genel Görünüm") &
+            (game_stats_data["name"].isin(REMOVE_STATS))
         )
     ]
 
-    return match_stats_data
+    return game_stats_data
 
-def create_team_similarity_plot(similarity_df, team, league_display, season_display, last_round, selected_categories, similarity_algorithm):
-    norm = plt.Normalize(similarity_df["similarity"].min(), similarity_df["similarity"].max())
-    colors = cm.coolwarm_r(norm(similarity_df["similarity"]))
+def create_team_similarity_plot(similarity_df, league, season, league_display, season_display, team, last_round, selected_categories, similarity_algorithm, top_features_pc1, top_features_pc2):
+    if similarity_algorithm == "Kosinüs Benzerliği":
+        norm = plt.Normalize(similarity_df["similarity"].min(), similarity_df["similarity"].max())
+        colors = cm.coolwarm_r(norm(similarity_df["similarity"]))
 
-    fig, ax = plt.subplots(figsize=(12, 10))
-    bars = ax.barh(similarity_df["team_name"], similarity_df["similarity"], color=colors)
+        fig, ax = plt.subplots(figsize=(12, 12))
+        bars = ax.barh(similarity_df["team_name"], similarity_df["similarity"], color=colors)
 
-    ax.set_xlabel("Benzerlik Skoru", fontsize=12, labelpad=15)
-    ax.set_ylabel("")
-    title = f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada {team} için Benzer Takımlar"
-    subtitle = f"{similarity_algorithm} Algoritmasına ve {', '.join(selected_categories)} Kategorisine Göre"
-    ax.set_title(
-        title,
-        fontsize=14,
-        fontweight="bold",
-        pad=30
-    )
-    ax.text(
-        0.5, 1.02,
-        subtitle,
-        fontsize=10,
-        fontstyle="italic",
-        color="gray",
-        ha="center",
-        va="bottom",
-        transform=ax.transAxes
-    )
-
-    add_footer(fig, y=-0.03)
-
-    ax.axvline(x=0, color="black", linewidth=1, alpha=0.3)
-
-    for i, (similarity, bar) in enumerate(zip(similarity_df["similarity"], bars)):
+        ax.set_xlabel("Benzerlik Skoru", fontsize=12, labelpad=15)
+        ax.set_ylabel("")
+        title = f"{league} {season} Sezonu Geçmiş {last_round} Haftada {team} için Benzer Takımlar"
+        subtitle = f"{similarity_algorithm} Algoritmasına ve {', '.join(selected_categories)} Kategorisine Göre"
+        ax.set_title(
+            title,
+            fontsize=14,
+            fontweight="bold",
+            pad=40
+        )
         ax.text(
-            bar.get_width() + 0.01,
-            bar.get_y() + bar.get_height() / 2,
-            f"{similarity:.2f}",
-            va="center",
-            fontsize=10
+            0.5, 1.02,
+            subtitle,
+            fontsize=10,
+            fontstyle="italic",
+            color="gray",
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes
         )
 
-    ax.invert_yaxis()
-    ax.grid(True, linestyle="--", alpha=0.3)
-    plt.tight_layout()
-    file_name = f"{league_display}_{season_display}_{last_round}_{team}_için Benzer Takımlar.png"
-    st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
-    st.pyplot(fig)
+        add_footer(fig, y=-0.03)
 
-def main(league, season, team, league_display, season_display, selected_categories, similarity_algorithm):
+        ax.axvline(x=0, color="black", linewidth=1, alpha=0.3)
+
+        for i, (similarity, bar) in enumerate(zip(similarity_df["similarity"], bars)):
+            ax.text(
+                bar.get_width() + 0.01,
+                bar.get_y() + bar.get_height() / 2,
+                f"{similarity:.2f}",
+                va="center",
+                fontsize=10
+            )
+
+        ax.invert_yaxis()
+        ax.grid(True, linestyle="--", alpha=0.3)
+        plt.tight_layout()
+
+        file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(team).replace(' ','-')}_benzer_takimlar_kosinus_benzerligi.png"
+        st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
+        st.pyplot(fig)
+
+    elif similarity_algorithm == "Temel Bileşen Analizi":
+        fig, ax = plt.subplots(figsize=(12, 12))
+        scatter = ax.scatter(
+            similarity_df["PC1"], similarity_df["PC2"],
+            c="blue", alpha=0.6, edgecolor="k"
+        )
+
+        ax.set_xlabel("PC1", fontsize=12, labelpad=15)
+        ax.set_ylabel("PC2", fontsize=12, labelpad=15)
+        ax.axvline(0, color="black", linewidth=0.8, linestyle="--", alpha=0.7)
+        ax.axhline(0, color="black", linewidth=0.8, linestyle="--", alpha=0.7)
+
+        title = f"{league} {season} Sezonu Geçmiş {last_round} Hafta için Temel Bileşen Analizi"
+        ax.set_title(title, fontsize=14, fontweight="bold", pad=50)
+
+        best_loadings_txt = f"PC1 en güçlü 5 yükleme: {', '.join(top_features_pc1)}\nPC2 en güçlü 5 yükleme: {', '.join(top_features_pc2)}"
+        ax.text(
+            0.5, 1.02,
+            best_loadings_txt,
+            fontsize=8,
+            fontstyle="italic",
+            color="gray",
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes
+        )
+
+        def getImage(path):
+            return OffsetImage(plt.imread(path), zoom=.3, alpha=1)
+
+        for index, row in similarity_df.iterrows():
+            logo_path = f"./imgs/team_logo/{index}.png"
+            ab = AnnotationBbox(getImage(logo_path), (row["PC1"], row["PC2"]), frameon=False)
+            ax.add_artist(ab)
+
+        add_footer(fig, y=-0.03)
+        plt.tight_layout()
+        ax.grid(True, linestyle="--", alpha=0.7)
+
+        file_name = f"{league_display}_{season_display}_{last_round}_temel_bilesen_analizi.png"
+        st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
+        st.pyplot(fig)
+
+def main(league, season, league_display, season_display, team, selected_categories, similarity_algorithm):
+
     try:
+
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
-        match_stats_data = load_filtered_json_files(directories, "match_stats", league, season)
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
 
-        match_stats_data["name"] = match_stats_data["name"].replace(match_performance_translations)
-        match_stats_data["group_name"] = match_stats_data["group_name"].replace(match_stats_group_name_translations)
-        match_stats_data = update_match_stats_categories(match_stats_data)
+        game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
 
-        matches_data = matches_data[["game_id", "home_team", "away_team"]]
+        game_stats_data["name"] = game_stats_data["name"].replace(match_performance_translations)
+        game_stats_data["group_name"] = game_stats_data["group_name"].replace(game_stats_group_name_translations)
+        game_stats_data = update_game_stats_categories(game_stats_data)
 
-        match_stats_data = match_stats_data[match_stats_data["period"] == "ALL"]
-        match_stats_data = match_stats_data.rename(
+        games_data = games_data[["game_id", "home_team", "away_team"]]
+
+        game_stats_data = game_stats_data[game_stats_data["period"] == "ALL"]
+        game_stats_data = game_stats_data.rename(
             columns={"home_team": "home_team_stats", "away_team": "away_team_stats"}
         )
 
@@ -199,18 +249,18 @@ def main(league, season, team, league_display, season_display, selected_categori
             "Çalımlar",
         ]
 
-        match_stats_data = clean_percent_columns(match_stats_data, percent_keywords, target_columns)
-        match_stats_data = clean_parenthesis_columns(match_stats_data, parenthesis_keywords, target_columns)
+        game_stats_data = clean_percent_columns(game_stats_data, percent_keywords, target_columns)
+        game_stats_data = clean_parenthesis_columns(game_stats_data, parenthesis_keywords, target_columns)
 
-        match_stats_data.loc[
-            ~match_stats_data["home_team_stats"].str.contains("/", na=False), "home_team_stats"
-        ] = pd.to_numeric(match_stats_data["home_team_stats"], errors="coerce")
+        game_stats_data.loc[
+            ~game_stats_data["home_team_stats"].str.contains("/", na=False), "home_team_stats"
+        ] = pd.to_numeric(game_stats_data["home_team_stats"], errors="coerce")
 
-        match_stats_data.loc[
-            ~match_stats_data["away_team_stats"].str.contains("/", na=False), "away_team_stats"
-        ] = pd.to_numeric(match_stats_data["away_team_stats"], errors="coerce")
+        game_stats_data.loc[
+            ~game_stats_data["away_team_stats"].str.contains("/", na=False), "away_team_stats"
+        ] = pd.to_numeric(game_stats_data["away_team_stats"], errors="coerce")
 
-        master_df = match_stats_data.merge(matches_data, on="game_id")
+        master_df = game_stats_data.merge(games_data, on="game_id")
 
         all_stats_df_list = []
 
@@ -258,12 +308,44 @@ def main(league, season, team, league_display, season_display, selected_categori
             ).sort_values(by="similarity", ascending=False)
             similarity_df = similarity_df[similarity_df["team_name"] != team]
 
+        elif similarity_algorithm == "Temel Bileşen Analizi":
+            scaler = StandardScaler()
+            normalized_pivot_df = pd.DataFrame(
+                scaler.fit_transform(pivot_df), index=pivot_df.index, columns=pivot_df.columns
+            )
+
+            pca = PCA(n_components=2)
+            pca_result = pca.fit_transform(normalized_pivot_df)
+            similarity_df = pd.DataFrame(pca_result, columns=["PC1", "PC2"], index=normalized_pivot_df.index)
+
+            loadings = pd.DataFrame(
+                pca.components_.T,
+                columns=["PC1", "PC2"],
+                index=pivot_df.columns
+            )
+
+            top_loadings = loadings.abs().nlargest(5, ["PC1", "PC2"])
+            top_features_pc1 = top_loadings["PC1"].nlargest(5).index.tolist()
+            top_features_pc2 = top_loadings["PC2"].nlargest(5).index.tolist()
+
         last_round = master_df["round"].max()
 
-        create_team_similarity_plot(similarity_df, team, league_display, season_display, last_round, selected_categories, similarity_algorithm)
+        create_team_similarity_plot(
+            similarity_df,
+            league,
+            season,
+            league_display,
+            season_display,
+            team,
+            last_round,
+            selected_categories,
+            similarity_algorithm,
+            top_features_pc1 if similarity_algorithm=="Temel Bileşen Analizi" else None,
+            top_features_pc2 if similarity_algorithm=="Temel Bileşen Analizi" else None
+        )
 
     except Exception as e:
-        st.error("Uygun veri bulunamadı.")
+        st.error(f"Uygun veri bulunamadı.{e}")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, season_display, last_round):
+def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league, season, league_display, season_display, last_round):
 
     fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -24,7 +24,7 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, 
     ax.axvline(x=mean_xgDiff, color="darkblue", linestyle="--", linewidth=2, label="Gerçekleşen - xG = 0")
 
     def getImage(path):
-        return OffsetImage(plt.imread(path), zoom=.4, alpha=1)
+        return OffsetImage(plt.imread(path), zoom=.3, alpha=1)
 
     for index, row in xg_xga_gerceklesen_teams.iterrows():
         logo_path = f"./imgs/team_logo/{row['team_name']}.png"
@@ -34,18 +34,16 @@ def create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, 
     ax.set_xlabel("Gerçekleşen - xG (Daha büyük daha iyi)", labelpad=20, fontsize=12)
     ax.set_ylabel("Gerçekleşen - xGA (Daha küçük daha iyi)", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Takımların Gerçekleşen ile Beklenen Gol Farkı",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gerçekleşen ile Beklenen Gol Farkı",
         fontsize=16,
         fontweight="bold",
         pad=40
     )
     ax.grid(True, linestyle="--", alpha=0.7)
-
     add_footer(fig)
-
     ax.invert_yaxis()
 
-    file_name = f"{league_display}_{season_display}_{last_round}_Gerçekleşen ile Beklenen Gol Farkı.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_gerceklesen_ile_beklenen_gol_farki.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
@@ -55,20 +53,20 @@ def main(league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
-        points_table_data = load_filtered_json_files(directories, "points_table", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        points_table_data = load_filtered_json_files(directories, "points_table", league_display, season_display)
 
         points_table_data = points_table_data[points_table_data["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 
-        shot_maps_data = shot_maps_data.merge(matches_data, on=["tournament", "season", "round", "game_id"])
+        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
         shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
 
         xg_xga_df = shot_maps_data.groupby(["game_id","team_name"])["xg"].sum().reset_index()
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = matches_data[matches_data["game_id"] == game_id]
+            match_info = games_data[games_data["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -94,9 +92,9 @@ def main(league, season, league_display, season_display):
         actual_xg_xga_diffs["xgConcededDiff"] = actual_xg_xga_diffs["scores_against"] - actual_xg_xga_diffs["xgConceded"]
         xg_xga_gerceklesen_teams = actual_xg_xga_diffs[["team_name","xgDiff","xgConcededDiff"]]
 
-        last_round = matches_data["round"].max()
+        last_round = games_data["round"].max()
 
-        create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league_display, season_display, last_round)
+        create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league, season, league_display, season_display, last_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

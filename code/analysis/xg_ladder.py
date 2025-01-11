@@ -2,16 +2,16 @@ import os
 import pandas as pd
 import numpy as np
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
 from config import PLOT_STYLE
 from adjustText import adjust_text
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_display, season_display, home_team, away_team, selected_round):
+def create_xg_ladder_plot(filtered_games, shot_maps_data, league, season, league_display, season_display, home_team, away_team, selected_round):
 
-    formatted_season = f"{season[:2]}/{season[2:]}"
+    formatted_season = f"{season_display[:2]}/{season_display[2:]}"
 
     goal_counts = shot_maps_data[
         (shot_maps_data["home_team"] == home_team) &
@@ -31,17 +31,17 @@ def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_displ
         (shot_maps_data["round"] == selected_round)
     ].reset_index(drop=True)
 
-    injury_time_1 = filtered_matches[
-        (filtered_matches["home_team"] == home_team) &
-        (filtered_matches["away_team"] == away_team) &
-        (filtered_matches["season"] == formatted_season) &
-        (filtered_matches["round"] == selected_round)
+    injury_time_1 = filtered_games[
+        (filtered_games["home_team"] == home_team) &
+        (filtered_games["away_team"] == away_team) &
+        (filtered_games["season"] == formatted_season) &
+        (filtered_games["round"] == selected_round)
     ]["injury_time_1"].iloc[0]
-    injury_time_2 = filtered_matches[
-        (filtered_matches["home_team"] == home_team) &
-        (filtered_matches["away_team"] == away_team) &
-        (filtered_matches["season"] == formatted_season) &
-        (filtered_matches["round"] == selected_round)
+    injury_time_2 = filtered_games[
+        (filtered_games["home_team"] == home_team) &
+        (filtered_games["away_team"] == away_team) &
+        (filtered_games["season"] == formatted_season) &
+        (filtered_games["round"] == selected_round)
     ]["injury_time_2"].iloc[0]
 
     xg_max_time_firsthalf = filtered_shotmaps_data[filtered_shotmaps_data["period"] == "First Half"]["net_time"].iloc[0]
@@ -326,7 +326,7 @@ def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_displ
 
     fig.subplots_adjust(wspace=0.05)
     fig.suptitle(
-        f"{league_display} {season_display} Sezonu {selected_round}. Hafta xG Merdiveni",
+        f"{league} {season} Sezonu {selected_round}. Hafta xG Merdiveni",
         fontsize=22,
         fontweight="bold"
     )
@@ -347,27 +347,26 @@ def create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_displ
     axs[0].grid(True, alpha=0.3)
     axs[1].grid(True, alpha=0.3)
 
-    file_name = f"{league_display}_{season_display}_{selected_round}_{home_team}-{away_team}.png"
+    file_name = f"{league_display}_{season_display}_{selected_round}_{turkish_english_lower(home_team)}-{turkish_english_lower(away_team)}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
 def main(league, season, league_display, season_display, selected_round, home_team, away_team):
-
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
-        filtered_matches = matches_data[
-            (matches_data["round"] == selected_round) &
-            (matches_data["home_team"] == home_team) &
-            (matches_data["away_team"] == away_team)
+        filtered_games = games_data[
+            (games_data["round"] == selected_round) &
+            (games_data["home_team"] == home_team) &
+            (games_data["away_team"] == away_team)
         ]
 
         shot_maps_data = shot_maps_data.merge(
-            filtered_matches,
+            filtered_games,
             on=["tournament","season","round","game_id"]
         )
         shot_maps_data["team_name"] = shot_maps_data.apply(
@@ -379,7 +378,7 @@ def main(league, season, league_display, season_display, selected_round, home_te
         shot_maps_data["added_time"] = shot_maps_data["added_time"].fillna(0)
         shot_maps_data["net_time"] = shot_maps_data["time"] + shot_maps_data["added_time"]
 
-        create_xg_ladder_plot(filtered_matches, shot_maps_data, season, league_display, season_display, home_team, away_team, selected_round)
+        create_xg_ladder_plot(filtered_games, shot_maps_data, league, season, league_display, season_display, home_team, away_team, selected_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

@@ -1,38 +1,73 @@
 import streamlit as st
-from code.analysis.goal_path import main as goal_path_main
-from code.analysis.shot_location import main as shot_location_main
+from code.analysis import (
+    goal_path,
+    shot_location
+)
 from code.utils.helpers import get_user_selection
 
-def display_team_based(team_list, change_situations, change_body_parts):
-    section = st.sidebar.radio(
+def render_spinner(content_function, *args, **kwargs):
+    with st.spinner("İçerik hazırlanıyor..."):
+        content_function(*args, **kwargs)
+
+def handle_goal_path(team_list, change_situations, change_body_parts):
+    league, season, league_display, season_display, team, _, _ = get_user_selection(
+        team_list,
+        change_situations,
+        change_body_parts,
+        include_situation_type=False,
+        include_body_part=False
+    )
+    if not team:
+        st.warning("Lütfen bir takım seçin.")
+        return
+    else:
+        render_spinner(
+            goal_path.main,
+            league,
+            season,
+            league_display,
+            season_display,
+            team=team
+        )
+
+def handle_shot_location(team_list, change_situations, change_body_parts):
+    league, season, league_display, season_display, team, situation_type, _ = get_user_selection(
+        team_list,
+        change_situations,
+        change_body_parts,
+        include_body_part=False
+    )
+    if not team:
+        st.warning("Lütfen bir takım seçin.")
+        return
+    if not situation_type:
+        st.warning("Lütfen bir senaryo tipi seçin.")
+        return
+    else:
+        render_spinner(
+            shot_location.main,
+            league,
+            season,
+            league_display,
+            season_display,
+            team,
+            situation_type
+        )
+
+def display_team_based(team_list, change_situations, change_body_parts, league, season):
+    section = st.sidebar.selectbox(
         "Kategori:",
         options=["Gol Ağı", "Şut Lokasyonu"],
         index=None,
-        label_visibility='hidden'
+        label_visibility="hidden",
+        placeholder="Kategoriler"
     )
 
+    if section is None:
+        st.warning("Lütfen bir kategori seçin.")
+        return
+
     if section == "Gol Ağı":
-        with st.spinner("İçerik hazırlanıyor..."):
-            league, season, team, league_display, season_display, _, _ = get_user_selection(
-                team_list, change_situations, change_body_parts, include_situation_type=False, include_body_part=False
-            )
-            goal_path_main(
-                league=league,
-                season=season,
-                team=team,
-                league_display=league_display,
-                season_display=season_display
-            )
+        handle_goal_path(team_list, change_situations, change_body_parts)
     elif section == "Şut Lokasyonu":
-        with st.spinner("İçerik hazırlanıyor..."):
-            league, season, team, league_display, season_display, situation_type, _ = get_user_selection(
-                team_list, change_situations, change_body_parts, include_body_part=False
-            )
-            shot_location_main(
-                league=league,
-                season=season,
-                team=team,
-                league_display=league_display,
-                season_display=season_display,
-                situation_type=situation_type
-            )
+        handle_shot_location(team_list, change_situations, change_body_parts)

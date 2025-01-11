@@ -1,5 +1,4 @@
 import os
-import numpy as np
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
 from config import PLOT_STYLE
@@ -8,7 +7,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, last_round):
+def create_xg_defence_efficiency_plot(team_opponent_df, league, season, league_display, season_display, last_round):
 
     fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -25,7 +24,7 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
     ax.axhline(y=mean_non_penalty_shot_conversion_against, color="darkred", linestyle="--", linewidth=2, label="Rakip Şut Dönüşüm Oranı (%) (Ortalama)")
 
     def getImage(path):
-        return OffsetImage(plt.imread(path), zoom=.4, alpha=1)
+        return OffsetImage(plt.imread(path), zoom=.3, alpha=1)
 
     for index, row in team_opponent_df.iterrows():
         logo_path = f"./imgs/team_logo/{row['team_name']}.png"
@@ -35,7 +34,7 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
     ax.set_xlabel("Rakip Şut Başına Beklenen Gol (xG) (Penaltı Hariç) (Daha küçük daha iyi)", labelpad=20, fontsize=12)
     ax.set_ylabel("Rakip Şut Dönüşüm Oranı (%) (Penaltı Hariç) (Daha küçük daha iyi)", labelpad=20, fontsize=12)
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada Rakip Şut Kalitesi ve Şut Dönüşüm Oranı",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada Rakip Şut Kalitesi ve Şut Dönüşüm Oranı",
         fontsize=16,
         fontweight="bold",
         pad=40
@@ -52,19 +51,19 @@ def create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_d
 
     add_footer(fig)
 
-    file_name = f"{league_display}_{season_display}_{last_round}_Rakip Şut Kalitesi ve Şut Dönüşüm Oranı.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_rakip_sut_kalitesi_ve_sut_donusum_orani.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
 def main(league, season, league_display, season_display):
-
     try:
+
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
-        shot_maps_data = shot_maps_data.merge(matches_data, on=["tournament", "season", "round", "game_id"])
+        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
         shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
         shot_maps_data = shot_maps_data[shot_maps_data["goal_type"] != "penalty"]
         shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
@@ -77,7 +76,7 @@ def main(league, season, league_display, season_display):
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = matches_data[matches_data["game_id"] == game_id]
+            match_info = games_data[games_data["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -112,9 +111,9 @@ def main(league, season, league_display, season_display):
         team_opponent_df['non_penalty_xg_per_shot_against'] = team_opponent_df['xgConceded'] / team_opponent_df['opponent_shots']
         team_opponent_df['non_penalty_shot_conversion_against'] = (team_opponent_df['opponent_goals'] / team_opponent_df['opponent_shots']) * 100
 
-        last_round = matches_data["round"].max()
+        last_round = games_data["round"].max()
 
-        create_xg_defence_efficiency_plot(team_opponent_df, league_display, season_display, last_round)
+        create_xg_defence_efficiency_plot(team_opponent_df, league, season, league_display, season_display, last_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

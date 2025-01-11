@@ -1,15 +1,15 @@
 import os
 import numpy as np
 import streamlit as st
-from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
+from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
 from config import change_situations, change_body_parts, PLOT_STYLE
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_display, last_round, plot_type, category=None, situation_type=None, body_part_type=None):
+def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league, season, league_display, season_display, last_round, plot_type, category=None, situation_type=None, body_part_type=None):
 
-    fig, ax = plt.subplots(figsize=(10, 14))
+    fig, ax = plt.subplots(figsize=(12, 12))
 
     if plot_type == "Üretilen xG ve Yenen xG (xGA)":
         x_col, xga_col = "xg", "xga"
@@ -41,13 +41,13 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
     y = np.arange(len(teams))
 
     for i, (xg_val, xga_val) in enumerate(zip(xg_values, xga_values)):
-        ax.plot([xg_val, xga_val], [y[i], y[i]], color="gray", alpha=0.5, linewidth=1.5)
+        ax.plot([xg_val, xga_val], [y[i], y[i]], color="gray", alpha=0.5, linewidth=1)
 
     for i, val in enumerate(xg_values):
-        ax.scatter(val, y[i], color="blue", s=100, label=label_suffix_1 if i == 0 else "")
+        ax.scatter(val, y[i], color="blue", edgecolors='black', s=150, label=label_suffix_1 if i == 0 else "")
 
     for i, val in enumerate(xga_values):
-        ax.scatter(val, y[i], color="red", s=100, label=label_suffix_2 if i == 0 else "")
+        ax.scatter(val, y[i], color="red", edgecolors='black', s=150, label=label_suffix_2 if i == 0 else "")
 
     ax.set_yticks(y)
     ax.set_yticklabels(teams, fontsize=10)
@@ -55,7 +55,7 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
     ax.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.3)
 
     ax.set_title(
-        f"{league_display} {season_display} Sezonu Geçmiş {last_round} Haftada {title_suffix}\n{additional_info_text}",
+        f"{league} {season} Sezonu Geçmiş {last_round} Haftada {title_suffix}\n{additional_info_text}",
         fontsize=14,
         fontweight="bold",
         pad=35
@@ -66,20 +66,19 @@ def create_strength_vs_weakness_xg_plot(xg_xga_sw_teams, league_display, season_
 
     plt.tight_layout()
 
-    file_name = f"{league_display}_{season_display}_{last_round}_{plot_type}_{additional_info_text}.png"
+    file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(plot_type)}_{turkish_english_lower(additional_info_text)}.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
 def main(league, season, league_display, season_display, situation_type=None, body_part_type=None, category=None, plot_type=None):
-
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        matches_data = load_filtered_json_files(directories, "matches", league, season)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league, season)
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
-        shot_maps_data = shot_maps_data.merge(matches_data, on=["tournament", "season", "round", "game_id"])
+        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
         shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
 
         shot_maps_data["situation"] = shot_maps_data["situation"].replace(change_situations)
@@ -106,7 +105,7 @@ def main(league, season, league_display, season_display, situation_type=None, bo
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = matches_data[matches_data["game_id"] == game_id]
+            match_info = games_data[games_data["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -134,11 +133,13 @@ def main(league, season, league_display, season_display, situation_type=None, bo
         team_totals_df["xgDiff"] = team_totals_df["goals"] - team_totals_df["xg"]
         team_totals_df["xgaDiff"] = team_totals_df["conceded_goals"] - team_totals_df["xga"]
 
-        last_round = matches_data["round"].max()
+        last_round = games_data["round"].max()
 
         if plot_type == "Üretilen xG ve Yenen xG (xGA)":
             create_strength_vs_weakness_xg_plot(
                 team_totals_df,
+                league,
+                season,
                 league_display,
                 season_display,
                 last_round,
@@ -150,6 +151,8 @@ def main(league, season, league_display, season_display, situation_type=None, bo
         elif plot_type == "Üretilen xG ve Yenen xG (xGA) (Gerçekleşen ile Fark)":
             create_strength_vs_weakness_xg_plot(
                 team_totals_df,
+                league,
+                season,
                 league_display,
                 season_display,
                 last_round,
