@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from code.analysis import player_heatmap, player_shot_location
+from code.analysis import player_heatmap, player_shot_location, player_rating
 from code.utils.helpers import load_filtered_json_files, get_user_selection
 
 def render_spinner(content_function, *args, **kwargs):
@@ -13,19 +13,19 @@ def load_team_data(team, data_type, directories, league_display, season_display)
 
     games_data = games_data[["game_id", "tournament", "season", "round", "home_team", "away_team"]]
 
-    if data_type == 'heat_maps':
+    if data_type == "heat_maps":
         merged_data = specific_data.merge(
             games_data,
             on=["game_id", "tournament", "season", "round"],
             how="left"
         )
-        merged_data['team_name'] = merged_data.apply(
-            lambda row: row['home_team'] if row['team'] == 'home' else row['away_team'],
+        merged_data["team_name"] = merged_data.apply(
+            lambda row: row["home_team"] if row["team"] == "home" else row["away_team"],
             axis=1
         )
-    elif data_type == 'shot_maps':
+    elif data_type == "shot_maps":
         specific_data = specific_data[[
-            "tournament", "season", "round", "game_id", "player_name", "is_home", "shot_type",
+            "tournament", "season", "round", "game_id", "player_name", "is_home", "shot_type", "goal_type",
             "situation", "goal_mouth_location", "player_coordinates_x", "player_coordinates_y"
         ]]
         merged_data = specific_data.merge(
@@ -33,13 +33,25 @@ def load_team_data(team, data_type, directories, league_display, season_display)
             on=["tournament", "season", "round", "game_id"],
             how="left"
         )
-        merged_data['team_name'] = merged_data.apply(
-            lambda row: row['home_team'] if row['is_home'] else row['away_team'],
+        merged_data["team_name"] = merged_data.apply(
+            lambda row: row["home_team"] if row["is_home"] else row["away_team"],
             axis=1
         )
+        merged_data = merged_data[merged_data["goal_type"] != "own"]
+    elif data_type == "lineups":
+        merged_data = specific_data.merge(
+            games_data,
+            on=["tournament", "season", "round", "game_id"],
+            how="left"
+        )
+        merged_data["team_name"] = merged_data.apply(
+            lambda row: row["home_team"] if row["team"] == "home" else row["away_team"],
+            axis=1
+        )
+        merged_data = merged_data[merged_data["stat_name"] == "rating"]
 
-    team_data = merged_data[merged_data['team_name'] == team]
-    return team_data[['player_name']].drop_duplicates()
+    team_data = merged_data[merged_data["team_name"] == team]
+    return team_data[["player_name"]].drop_duplicates()
 
 def handle_player_section(section, team_list, change_situations, change_body_parts):
     league, season, league_display, season_display, team, _, _ = get_user_selection(
@@ -55,9 +67,13 @@ def handle_player_section(section, team_list, change_situations, change_body_par
         return
 
     directories = os.path.join(os.path.dirname(__file__), '../data/sofascore/raw/')
-    data_type = 'heat_maps' if section == "Isı Haritası" else 'shot_maps'
+    data_type = (
+        "heat_maps" if section == "Isı Haritası" else
+        "shot_maps" if section == "Şut Lokasyonu" else
+        "lineups" if section == "Reyting" else None
+    )
     team_data = load_team_data(team, data_type, directories, league_display, season_display)
-    players_list = team_data['player_name'].tolist()
+    players_list = team_data["player_name"].tolist()
 
     selected_player = st.sidebar.selectbox(
         "Oyuncular",
@@ -75,11 +91,13 @@ def handle_player_section(section, team_list, change_situations, change_body_par
             render_spinner(player_heatmap.main, league, season, league_display, season_display, team, selected_player)
         elif section == "Şut Lokasyonu":
             render_spinner(player_shot_location.main, league, season, league_display, season_display, team, selected_player)
+        elif section == "Reyting":
+            render_spinner(player_rating.main, league, season, league_display, season_display, team, selected_player)
 
 def display_player_based(team_list, change_situations, change_body_parts, league, season):
     section = st.sidebar.selectbox(
         "Kategori:",
-        options=["Isı Haritası", "Şut Lokasyonu"],
+        options=["Isı Haritası", "Şut Lokasyonu", "Reyting"],
         index=None,
         label_visibility="hidden",
         placeholder="Kategoriler"

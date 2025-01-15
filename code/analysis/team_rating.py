@@ -54,8 +54,7 @@ def create_rating_plot(rating_data, league, season, league_display, season_displ
         )
 
         add_footer(fig)
-
-        file_name = f"{league_display}_{season_display}_{last_round}_Takımların {turkish_english_lower(context)} Reyting Ortalaması ve Standart Sapması.png"
+        file_name = f"{league_display}_{season_display}_{last_round}_takimlarin_{turkish_english_lower(context)}_reyting_ortalamasi_ve_standart-sapmasi.png"
         st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
         st.pyplot(fig)
 
