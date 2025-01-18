@@ -34,6 +34,7 @@ def display_xg_analysis(team_list, change_situations, change_body_parts):
     if analysis_type == "xG Merdiveni":
         directories = os.path.join(os.path.dirname(__file__), '../data/sofascore/raw/')
         games_data = load_filtered_json_files(directories, 'games', league_display, season_display)
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[['round', 'home_team', 'away_team']]
 
         rounds = games_data['round'].unique()

@@ -4,7 +4,7 @@ from modules.team_based import display_team_based
 from modules.team_comparison import display_team_comparison
 from modules.player_based import display_player_based
 from modules.match_comparison import display_match_comparison
-from modules.analysis import display_analysis
+from modules.analysis import display_eda_analysis, display_predictive_analytics
 from config import team_list_by_season, change_situations, change_body_parts
 from code.utils.helpers import load_styles
 from st_social_media_links import SocialMediaIcons
@@ -108,7 +108,7 @@ def handle_player_section():
             st.session_state.get("selected_season")
         )
     elif selection == "Oyuncular Arası":
-        pass
+        st.info("Oyuncular arası bölümü yakında eklenecek.")
 
 def handle_match_section():
     selection = st.sidebar.radio(
@@ -118,7 +118,7 @@ def handle_match_section():
         label_visibility="hidden"
     )
     if selection == "Takım Bazlı":
-        pass
+        st.info("Takım bazlı bölümü yakında eklenecek.")
     elif selection == "Takımlar Arası":
         display_match_comparison(
             team_list_by_season,
@@ -131,12 +131,20 @@ def handle_match_section():
 def handle_analysis_section():
     selection = st.sidebar.radio(
         "Analiz Türü",
-        ["Keşifçi Veri Analizi"],
+        ["Keşifçi Veri Analizi", "Tahmin"],
         index=None,
         label_visibility="hidden"
     )
     if selection == "Keşifçi Veri Analizi":
-        display_analysis(
+        display_eda_analysis(
+            team_list_by_season,
+            change_situations,
+            change_body_parts,
+            st.session_state.get("selected_league"),
+            st.session_state.get("selected_season")
+        )
+    elif selection == "Tahmin":
+        display_predictive_analytics(
             team_list_by_season,
             change_situations,
             change_body_parts,
@@ -164,7 +172,7 @@ def run_app():
         if st.session_state.get("league_season_confirmed", False):
             handle_team_section()
         else:
-            st.warning("Lütfen önce Ana Sayfa'dan lig ve sezon seçimini yapınız.")
+            st.warning("Lütfen önce ana sayfadan lig ve sezon seçimini yapınız.")
     elif general_section == "Oyuncu":
         if st.session_state.get("league_season_confirmed", False):
             handle_player_section()
