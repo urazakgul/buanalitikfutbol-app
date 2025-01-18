@@ -75,6 +75,17 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
         st.warning("Lütfen bir maç seçin.")
         return
 
+    plot_type = st.sidebar.radio(
+        "Gösterim Şekli:",
+        ["Matris", "Sıralı"],
+        index=None,
+        label_visibility="hidden"
+    )
+
+    if plot_type is None:
+        st.warning("Lütfen bir gösterim şekli seçin.")
+        return
+
     render_spinner(
         predictive_analytics.main,
         league,
@@ -83,7 +94,8 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
         season_display,
         selected_model,
         selected_game,
-        max_round_next_day
+        max_round_next_day,
+        plot_type
     )
 
 def display_eda_analysis(team_list, change_situations, change_body_parts, league, season):

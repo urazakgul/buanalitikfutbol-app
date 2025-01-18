@@ -2,10 +2,12 @@ from config import PLOT_STYLE
 from code.utils.helpers import load_filtered_json_files, add_footer, add_download_button, turkish_english_lower
 import os
 import numpy as np
+import pandas as pd
 from scipy.stats import poisson
 from scipy.optimize import minimize
 import streamlit as st
 import seaborn as sns
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
@@ -106,7 +108,7 @@ def solve_parameters_cached(dataset):
 def dixon_coles_simulate_match_cached(params_dict, home_team, away_team, max_goals=10):
     return dixon_coles_simulate_match(params_dict, home_team, away_team, max_goals)
 
-def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_team, away_team, league, season, league_display, season_display, last_round, max_round_next_day):
+def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_team, away_team, league, season, league_display, season_display, last_round, max_round_next_day, plot_type):
 
     home_win_prob = np.sum(np.tril(home_away_teams_dc, -1)) * 100
     draw_prob = np.sum(np.diag(home_away_teams_dc)) * 100
@@ -114,44 +116,92 @@ def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_te
 
     percentage_matrix = home_away_teams_dc * 100
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    if plot_type == "Matris":
+        fig, ax = plt.subplots(figsize=(10, 8))
 
-    sns.heatmap(
-        percentage_matrix,
-        annot=True,
-        fmt=".1f",
-        cmap="Reds",
-        cbar=False,
-        ax=ax
-    )
+        sns.heatmap(
+            percentage_matrix,
+            annot=True,
+            fmt=".1f",
+            cmap="Reds",
+            cbar=False,
+            ax=ax
+        )
 
-    ax.set_xlabel(f"{away_team} (Deplasman) Gol Sayısı", labelpad=20, fontsize=12)
-    ax.xaxis.set_label_position("top")
-    ax.xaxis.tick_top()
+        ax.set_xlabel(f"{away_team} (Deplasman) Gol Sayısı", labelpad=20, fontsize=12)
+        ax.xaxis.set_label_position("top")
+        ax.xaxis.tick_top()
 
-    ax.set_ylabel(f"{home_team} (Ev Sahibi) Gol Sayısı", fontsize=12)
-    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+        ax.set_ylabel(f"{home_team} (Ev Sahibi) Gol Sayısı", fontsize=12)
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
 
-    ax.set_title(
-        f"{league} {season} Sezonu {max_round_next_day}. Hafta Maç Sonu Olasılıkları",
-        fontsize=16,
-        fontweight="bold",
-        pad=45
-    )
+        ax.set_title(
+            f"{league} {season} Sezonu {max_round_next_day}. Hafta Maç Sonu Olasılıkları",
+            fontsize=16,
+            fontweight="bold",
+            pad=45
+        )
 
-    plt.suptitle(
-        f"{home_team} Galibiyeti: %{home_win_prob:.1f} | Beraberlik: %{draw_prob:.1f} | {away_team} Galibiyeti: %{away_win_prob:.1f}",
-        fontsize=10,
-        y=0.89
-    )
+        plt.suptitle(
+            f"{home_team} Galibiyeti: %{home_win_prob:.1f} | Beraberlik: %{draw_prob:.1f} | {away_team} Galibiyeti: %{away_win_prob:.1f}",
+            fontsize=10,
+            y=0.89
+        )
 
-    add_footer(fig, x=0.98, y=-0.05, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
-    plt.tight_layout()
+        add_footer(fig, x=0.98, y=-0.05, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
+        plt.tight_layout()
+
+    elif plot_type == "Sıralı":
+        bar_data = []
+        for i in range(percentage_matrix.shape[0]):
+            for j in range(percentage_matrix.shape[1]):
+                bar_data.append({
+                    "Home Goals": int(i),
+                    "Away Goals": int(j),
+                    "Probability": percentage_matrix[i, j]
+                })
+
+        bar_data = pd.DataFrame(bar_data)
+        bar_data = bar_data.sort_values("Probability", ascending=False).head(20)
+
+        norm = mcolors.Normalize(vmin=bar_data["Probability"].min(), vmax=bar_data["Probability"].max())
+        cmap = plt.get_cmap("Reds")
+        colors = [cmap(norm(prob)) for prob in bar_data["Probability"]]
+
+        fig, ax = plt.subplots(figsize=(12, 12))
+        ax.barh(
+            bar_data.apply(lambda x: f"{int(x['Home Goals'])} - {int(x['Away Goals'])}", axis=1),
+            bar_data["Probability"],
+            color=colors,
+            edgecolor="black"
+        )
+
+        ax.set_title(
+            f"{league} {season} Sezonu {max_round_next_day}. Hafta Maç Sonu Olasılıkları (Sıralı, İlk 20)",
+            fontsize=16,
+            fontweight="bold",
+            pad=50
+        )
+        plt.suptitle(
+            f"{home_team} - {away_team}",
+            fontsize=16,
+            fontweight="bold",
+            y=0.91
+        )
+        ax.set_xlabel("Olasılık (%)", labelpad=20, fontsize=12)
+        ax.set_ylabel("Gol Kombinasyonları", labelpad=20, fontsize=12)
+        ax.invert_yaxis()
+
+        ax.grid(True, linestyle="--", alpha=0.7)
+
+        add_footer(fig, x=0.98, y=-0.02, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
+        plt.tight_layout()
+
     file_name = f"{league_display}_{season_display}_{max_round_next_day}_{turkish_english_lower(home_team)}_{turkish_english_lower(away_team)}_{turkish_english_lower(selected_model)}_mac_sonu_olasiliklari.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(league, season, league_display, season_display, selected_model, selected_game, max_round_next_day):
+def main(league, season, league_display, season_display, selected_model, selected_game, max_round_next_day, plot_type):
 
     try:
 
@@ -189,7 +239,19 @@ def main(league, season, league_display, season_display, selected_model, selecte
 
         last_round = games_data[games_data["status"] == "Ended"]["round"].max()
 
-        create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_team, away_team, league, season, league_display, season_display, last_round, max_round_next_day)
+        create_predictive_analytics_plot(
+            home_away_teams_dc,
+            selected_model,
+            home_team,
+            away_team,
+            league,
+            season,
+            league_display,
+            season_display,
+            last_round,
+            max_round_next_day,
+            plot_type
+        )
 
     except Exception as e:
         st.error(f"Uygun veri bulunamadı.{e}")
