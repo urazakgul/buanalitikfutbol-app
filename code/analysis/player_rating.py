@@ -86,6 +86,7 @@ def main(league, season, league_display, season_display, team, player):
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
         lineups_data = load_filtered_json_files(directories, "lineups", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[["tournament","season","round","game_id","home_team","home_team_id","away_team","away_team_id"]]
 
         player_rating_df = games_data.merge(

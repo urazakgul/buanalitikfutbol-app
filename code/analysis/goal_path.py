@@ -115,27 +115,26 @@ def main(league, season, league_display, season_display, team=None):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        dataframes = {
-            "games": load_filtered_json_files(directories, "games", league_display, season_display),
-            "shot_maps": load_filtered_json_files(directories, "shot_maps", league_display, season_display),
-            "goal_paths": load_filtered_json_files(directories, "goal_paths", league_display, season_display)
-        }
+        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        goal_paths_data = load_filtered_json_files(directories, "goal_paths", league_display, season_display)
 
-        games_data = dataframes["games"][["tournament", "season", "round", "game_id", "home_team", "away_team"]]
-        games_shot_maps_df = merge_match_data(games_data, dataframes["shot_maps"])
-        dataframes["goal_paths"]["team_name"] = None
+        games_data = games_data[games_data["status"] == "Ended"]
+        games_data = games_data[["tournament", "season", "round", "game_id", "home_team", "away_team"]]
+        games_shot_maps_df = merge_match_data(games_data, shot_maps_data)
+        goal_paths_data["team_name"] = None
 
         for game_id in games_shot_maps_df["game_id"].unique():
             match_data = games_shot_maps_df[games_shot_maps_df["game_id"] == game_id]
             for _, row in match_data.iterrows():
                 team_name = row["home_team"] if row["is_home"] else row["away_team"]
-                dataframes["goal_paths"].loc[
-                    (dataframes["goal_paths"]["game_id"] == game_id) &
-                    (dataframes["goal_paths"]["player_name"] == row["player_name"]) &
-                    (dataframes["goal_paths"]["event_type"] == "goal"), "team_name"
+                goal_paths_data.loc[
+                    (goal_paths_data["game_id"] == game_id) &
+                    (goal_paths_data["player_name"] == row["player_name"]) &
+                    (goal_paths_data["event_type"] == "goal"), "team_name"
                 ] = team_name
 
-        goal_paths_data = fill_team_name(dataframes["goal_paths"])
+        goal_paths_data = fill_team_name(goal_paths_data)
         for _, group in goal_paths_data.groupby("id"):
             if (group["event_type"] == "goal").any() and group.loc[group["event_type"] == "goal", "goal_shot_x"].iloc[0] != 100:
                 goal_paths_data.loc[group.index, ["player_x", "player_y"]] = 100 - group[["player_x", "player_y"]]

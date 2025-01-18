@@ -58,6 +58,7 @@ def main(league, season, league_display, season_display, team, player):
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
         heat_maps_data = load_filtered_json_files(directories, "heat_maps", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[['game_id', 'tournament', 'season', 'round', 'home_team', 'away_team']]
 
         hmap_data_df = heat_maps_data.merge(

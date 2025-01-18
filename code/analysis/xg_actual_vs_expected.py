@@ -57,6 +57,8 @@ def main(league, season, league_display, season_display):
         shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
         points_table_data = load_filtered_json_files(directories, "points_table", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
+
         points_table_data = points_table_data[points_table_data["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 
         shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])

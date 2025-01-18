@@ -215,6 +215,8 @@ def main(league, season, league_display, season_display, team, selected_categori
         game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
+
         game_stats_data["name"] = game_stats_data["name"].replace(match_performance_translations)
         game_stats_data["group_name"] = game_stats_data["group_name"].replace(game_stats_group_name_translations)
         game_stats_data = update_game_stats_categories(game_stats_data)

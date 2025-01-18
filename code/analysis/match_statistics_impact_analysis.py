@@ -108,6 +108,7 @@ def main(league, season, league_display, season_display, selected_variable):
         game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
         shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[["tournament", "season", "round", "game_id", "home_team", "away_team"]]
 
         game_stats_data = game_stats_data[game_stats_data['period'] == 'ALL']

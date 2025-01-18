@@ -96,6 +96,7 @@ def main(category, league, season, league_display, season_display):
         lineups_data = load_filtered_json_files(directories, "lineups", league_display, season_display)
         substitutions_data = load_filtered_json_files(directories, "substitutions", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[["tournament","season","round","game_id","home_team","away_team"]]
         heat_maps_data = heat_maps_data.groupby(["tournament","season","round","game_id","player_name", "player_id"]).agg({'x': 'mean', 'y': 'mean'}).reset_index()
         lineups_data = lineups_data[["tournament","season","round","game_id","team","player_name", "player_id"]].drop_duplicates()

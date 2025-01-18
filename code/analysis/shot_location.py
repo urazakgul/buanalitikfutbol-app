@@ -129,6 +129,8 @@ def main(league, season, league_display, season_display, team=None, situation_ty
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
         shotmaps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
+
         shotmaps_data = shotmaps_data[[
             "season", "round", "game_id", "is_home", "shot_type", "situation",
             "goal_mouth_location", "player_coordinates_x", "player_coordinates_y"

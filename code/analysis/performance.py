@@ -394,6 +394,7 @@ def main(subcategory, league, season, league_display, season_display):
         game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[["game_id","home_team","away_team"]]
 
         game_stats_data = game_stats_data[game_stats_data["period"] == "ALL"]

@@ -78,6 +78,8 @@ def main(league, season, league_display, season_display, situation_type=None, bo
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
         shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
+
         shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
         shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
 

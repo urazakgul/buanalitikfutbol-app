@@ -59,6 +59,7 @@ def main(category, subcategory, league, season, league_display, season_display):
         games_data = load_filtered_json_files(directories, "games", league_display, season_display)
         shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
 
+        games_data = games_data[games_data["status"] == "Ended"]
         games_data = games_data[["season", "round", "game_id", "home_team", "away_team"]]
 
         shot_maps_data = shot_maps_data[[

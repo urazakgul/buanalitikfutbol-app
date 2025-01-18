@@ -67,6 +67,8 @@ def main(subcategory, league, season, league_display, season_display):
         lineups_data = load_filtered_json_files(directories, "lineups", league_display, season_display)
         lineups_data = lineups_data[lineups_data["stat_name"] == "rating"]
 
+        games_data = games_data[games_data["status"] == "Ended"]
+
         lineups_games_data = lineups_data.merge(
             games_data,
             on=["tournament","season","round","game_id"],
