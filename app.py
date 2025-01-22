@@ -177,17 +177,17 @@ def run_app():
         if st.session_state.get("league_season_confirmed", False):
             handle_player_section()
         else:
-            st.warning("Lütfen önce Ana Sayfa'dan lig ve sezon seçimini yapınız.")
+            st.warning("Lütfen önce ana sayfadan lig ve sezon seçimini yapınız.")
     elif general_section == "Maç":
         if st.session_state.get("league_season_confirmed", False):
             handle_match_section()
         else:
-            st.warning("Lütfen önce Ana Sayfa'dan lig ve sezon seçimini yapınız.")
+            st.warning("Lütfen önce ana sayfadan lig ve sezon seçimini yapınız.")
     elif general_section == "Analiz":
         if st.session_state.get("league_season_confirmed", False):
             handle_analysis_section()
         else:
-            st.warning("Lütfen önce Ana Sayfa'dan lig ve sezon seçimini yapınız.")
+            st.warning("Lütfen önce ana sayfadan lig ve sezon seçimini yapınız.")
     elif general_section == "Metaveri":
         st.info("Metaveri bölümü yakında eklenecek.")
 
