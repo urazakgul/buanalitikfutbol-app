@@ -174,8 +174,8 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
                 else:
                     ax.text(
                         0.5, 0.5,
-                        "Bu haftada gol yok",
-                        fontsize=12,
+                        "Gol ağı bulunmamaktadır.",
+                        fontsize=10,
                         ha="center",
                         va="center",
                         transform=ax.transAxes
@@ -186,9 +186,21 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
             for j in range(len(rounds), len(axes)):
                 axes[j].axis("off")
 
+            handles = [plt.Line2D([0], [0], marker="o", color=color, markersize=7, linestyle="None") for _, color in event_colors.items()]
+            ax.legend(
+                handles,
+                event_colors.keys(),
+                title="",
+                loc="lower center",
+                bbox_to_anchor=(-2, -0.2),
+                frameon=False,
+                ncol=3,
+                fontsize=8
+            )
+
             fig.suptitle(
                 f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları",
-                fontsize=14,
+                fontsize=16,
                 fontweight="bold",
                 y=0.96
             )
@@ -196,14 +208,14 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
             fig.text(
                 0.5, 0.93,
                 turkish_upper(team),
-                fontsize=12,
+                fontsize=14,
                 fontweight="bold",
                 ha="center",
                 va="center"
             )
 
             fig.text(
-                0.5, 0.03,
+                0.51, 0.02,
                 "Veri: SofaScore, Hazırlayan: @urazdev",
                 ha="center",
                 fontsize=12,
