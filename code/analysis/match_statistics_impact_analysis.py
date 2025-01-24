@@ -70,7 +70,7 @@ def create_match_statistics_impact_analysis_plot(merged_data, selected_variable,
     categories = ["Galibiyet", "Mağlubiyet", "Beraberlik"]
     rates = [win_rate, loss_rate, draw_rate]
 
-    fig, ax = plt.subplots(figsize=(12, 12))
+    fig, ax = plt.subplots(figsize=(12, 8))
     bars = ax.bar(categories, rates, color=["green", "red", "blue"], edgecolor="black", alpha=0.8)
     for bar, rate in zip(bars, rates):
         ax.text(

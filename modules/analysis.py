@@ -29,7 +29,7 @@ def load_game_data(directories, league_display, season_display):
         st.warning("Henüz yeterli veri bulunmamaktadır.")
         return None
 
-def handle_eda_analysis(team_list, change_situations, change_body_parts, selected_variable):
+def handle_eda_analysis(team_list, change_situations, change_body_parts, selected_category, extended_options):
     league, season, league_display, season_display, _, _, _ = get_user_selection(
         team_list,
         change_situations,
@@ -38,14 +38,28 @@ def handle_eda_analysis(team_list, change_situations, change_body_parts, selecte
         include_situation_type=False,
         include_body_part=False
     )
-    render_spinner(
-        match_statistics_impact_analysis.main,
-        league,
-        season,
-        league_display,
-        season_display,
-        selected_variable
-    )
+    if selected_category == "İstatistiklerin Maça Etkisi":
+        selected_variable = st.sidebar.selectbox(
+            label="İstatistikler:",
+            options=extended_options,
+            index=None,
+            label_visibility="hidden",
+            placeholder="Değişkenler",
+            key="variable_subcategory",
+        )
+
+        if selected_variable is None:
+            st.warning("Lütfen bir değişken seçin.")
+            return
+
+        render_spinner(
+            match_statistics_impact_analysis.main,
+            league,
+            season,
+            league_display,
+            season_display,
+            selected_variable
+        )
 
 def handle_predictive_analytics(team_list, change_situations, change_body_parts, selected_model):
     league, season, league_display, season_display, _, _, _ = get_user_selection(
@@ -107,7 +121,7 @@ def display_eda_analysis(team_list, change_situations, change_body_parts, league
         else:
             extended_options.append(stat)
 
-    section = st.sidebar.selectbox(
+    selected_category = st.sidebar.selectbox(
         label="Kategori:",
         options=["İstatistiklerin Maça Etkisi"],
         index=None,
@@ -115,25 +129,11 @@ def display_eda_analysis(team_list, change_situations, change_body_parts, league
         placeholder="Kategoriler"
     )
 
-    if section is None:
+    if selected_category is None:
         st.warning("Lütfen bir kategori seçin.")
         return
 
-    selected_variable = st.sidebar.selectbox(
-        label="İstatistikler",
-        options=extended_options,
-        index=None,
-        label_visibility="hidden",
-        placeholder="Değişkenler",
-        key="variable_subcategory",
-    )
-
-    if selected_variable is None:
-        st.warning("Lütfen bir değişken seçin.")
-        return
-
-    if section == "İstatistiklerin Maça Etkisi":
-        handle_eda_analysis(team_list, change_situations, change_body_parts, selected_variable)
+    handle_eda_analysis(team_list, change_situations, change_body_parts, selected_category, extended_options)
 
 def display_predictive_analytics(team_list, change_situations, change_body_parts, league, season):
     selected_model = st.sidebar.selectbox(
