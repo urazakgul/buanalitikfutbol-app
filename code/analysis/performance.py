@@ -173,6 +173,8 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league,
             result_all_stats_df["stat_name"] == "Ceza Sahasında Topla Buluşma"
         ].groupby("team_name", as_index=False)["stat_value"].sum()
 
+        penalty_area_touch_data["stat_value"] = penalty_area_touch_data["stat_value"].astype(int)
+
         plot_horizontal_bar(
             data=penalty_area_touch_data,
             x="stat_value",
@@ -191,6 +193,8 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league,
         final_third_entry_data = result_all_stats_df[
             result_all_stats_df["stat_name"] == "Üçüncü Bölgeye Girişler"
         ].groupby("team_name", as_index=False)["stat_value"].sum()
+
+        final_third_entry_data["stat_value"] = final_third_entry_data["stat_value"].astype(int)
 
         plot_horizontal_bar(
             data=final_third_entry_data,
