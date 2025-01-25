@@ -20,8 +20,8 @@ def render_welcome_message():
 def render_league_season_selection():
     st.markdown("<h3>Lig ve Sezon Seçimi</h3>", unsafe_allow_html=True)
     st.markdown("""
-        <div style="margin-top: 4px; font-style: italic; color: gray;">
-            Lütfen analiz yapmak istediğiniz lig ve sezonu seçiniz. Seçiminizi onayladıktan sonra analizler bu bilgilere göre gerçekleştirilecektir. Seçiminizi değiştirmek isterseniz bu sayfaya tekrar dönebilirsiniz.
+        <div style="font-style: italic; color: gray;">
+            Lütfen analiz yapmak istediğiniz lig ve sezonu seçiniz. Seçiminizi kaydettikten sonra analizler bu bilgilere göre gerçekleştirilecektir. Seçiminizi değiştirmek isterseniz bu sayfaya tekrar dönebilirsiniz.
         </div>
     """, unsafe_allow_html=True)
 
@@ -40,7 +40,7 @@ def render_league_season_selection():
         placeholder="Sezonlar"
     )
 
-    if st.button("Onayla"):
+    if st.button("Kaydet"):
         st.session_state["selected_league"] = selected_league
         st.session_state["selected_season"] = selected_season
         st.session_state["league_season_confirmed"] = True
