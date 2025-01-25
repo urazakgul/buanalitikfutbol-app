@@ -90,8 +90,8 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
         return
 
     plot_type = st.sidebar.radio(
-        "Gösterim Şekli:",
-        ["Matris", "Sıralı"],
+        label="Gösterim Şekli:",
+        options=["Matris", "Sıralı", "Özet"],
         index=None,
         label_visibility="hidden"
     )
@@ -99,6 +99,18 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
     if plot_type is None:
         st.warning("Lütfen bir gösterim şekli seçin.")
         return
+
+    if plot_type == "Özet":
+        first_n_goals = st.sidebar.number_input(
+            label="Gol Kombinasyonu:",
+            min_value=2,
+            max_value=121,
+            value=10,
+            label_visibility="hidden",
+            placeholder="Gol Kombinasyonu"
+        )
+    else:
+        first_n_goals = 10
 
     render_spinner(
         predictive_analytics.main,
@@ -109,7 +121,8 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
         selected_model,
         selected_game,
         max_round_next_day,
-        plot_type
+        plot_type,
+        first_n_goals
     )
 
 def display_eda_analysis(team_list, change_situations, change_body_parts, league, season):

@@ -108,7 +108,7 @@ def solve_parameters_cached(dataset):
 def dixon_coles_simulate_match_cached(params_dict, home_team, away_team, max_goals=10):
     return dixon_coles_simulate_match(params_dict, home_team, away_team, max_goals)
 
-def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_team, away_team, league, season, league_display, season_display, last_round, max_round_next_day, plot_type):
+def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_team, away_team, league, season, league_display, season_display, last_round, max_round_next_day, plot_type, first_n_goals):
 
     home_win_prob = np.sum(np.tril(home_away_teams_dc, -1)) * 100
     draw_prob = np.sum(np.diag(home_away_teams_dc)) * 100
@@ -196,12 +196,79 @@ def create_predictive_analytics_plot(home_away_teams_dc, selected_model, home_te
 
         add_footer(fig, x=0.98, y=-0.02, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
         plt.tight_layout()
+    elif plot_type == "Özet":
+        bar_data = []
+        for i in range(percentage_matrix.shape[0]):
+            for j in range(percentage_matrix.shape[1]):
+                bar_data.append({
+                    "Home Goals": int(i),
+                    "Away Goals": int(j),
+                    "Probability": percentage_matrix[i, j]
+                })
+
+        bar_data = pd.DataFrame(bar_data)
+        top_combinations = bar_data.sort_values("Probability", ascending=False).head(first_n_goals)
+
+        summary = {
+            "Ev Sahibi Önde": sum(top_combinations["Home Goals"] > top_combinations["Away Goals"]),
+            "Deplasman Önde": sum(top_combinations["Home Goals"] < top_combinations["Away Goals"]),
+            "Beraberlik": sum(top_combinations["Home Goals"] == top_combinations["Away Goals"]),
+            "Ortalama Ev Sahibi Golü": top_combinations["Home Goals"].mean(),
+            "Ortalama Deplasman Golü": top_combinations["Away Goals"].mean(),
+            "Karşılıklı Gol Var": sum((top_combinations["Home Goals"] > 0) & (top_combinations["Away Goals"] > 0)),
+            "Karşılıklı Gol Yok": sum((top_combinations["Home Goals"] == 0) | (top_combinations["Away Goals"] == 0)),
+            "0.5 Üst": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) > 0.5),
+            "1.5 Üst": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) > 1.5),
+            "2.5 Üst": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) > 2.5),
+            "3.5 Üst": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) > 3.5),
+            "4.5 Üst": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) > 4.5),
+            "0.5 Alt": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) <= 0.5),
+            "1.5 Alt": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) <= 1.5),
+            "2.5 Alt": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) <= 2.5),
+            "3.5 Alt": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) <= 3.5),
+            "4.5 Alt": sum((top_combinations["Home Goals"] + top_combinations["Away Goals"]) <= 4.5),
+        }
+
+        group_1 = {k: summary[k] for k in ["Ev Sahibi Önde", "Beraberlik", "Deplasman Önde"]}
+        group_2 = {k: summary[k] for k in ["Ortalama Ev Sahibi Golü", "Ortalama Deplasman Golü"]}
+        group_3 = {k: summary[k] for k in ["Karşılıklı Gol Var", "Karşılıklı Gol Yok"]}
+        group_4 = {k: summary[k] for k in ["0.5 Üst", "1.5 Üst", "2.5 Üst", "3.5 Üst", "4.5 Üst"]}
+        group_5 = {k: summary[k] for k in ["0.5 Alt", "1.5 Alt", "2.5 Alt", "3.5 Alt", "4.5 Alt"]}
+
+        groups = [group_1, group_2, group_3, group_4, group_5]
+        group_titles = ["Sonuç", "Ortalama Goller", "Karşılıklı Goller", "Üst Oynama", "Alt Oynama"]
+
+        fig, axes = plt.subplots(5, 1, figsize=(12, 20))
+
+        fig.suptitle(
+            f"{league} {season} Sezonu {max_round_next_day}. Haftada İlk {first_n_goals} Gol Kombinasyonuna Göre Sonuçlar",
+            fontsize=16,
+            fontweight="bold",
+            y=1.04
+        )
+        fig.text(
+            0.5, 1.00,
+            f"{home_team} - {away_team}",
+            ha="center",
+            fontsize=14,
+            fontweight="bold"
+        )
+
+        for ax, group, title in zip(axes, groups, group_titles):
+            ax.bar(group.keys(), group.values(), color="indianred", edgecolor="black")
+            ax.set_title(title, fontsize=14, fontweight="bold")
+            ax.set_ylabel("")
+            ax.grid(axis="y", linestyle="--", alpha=0.7)
+            ax.set_xticklabels(group.keys(), rotation=0, ha="center")
+
+        add_footer(fig, x=0.98, y=-0.02, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
+        plt.tight_layout()
 
     file_name = f"{league_display}_{season_display}_{max_round_next_day}_{turkish_english_lower(home_team)}_{turkish_english_lower(away_team)}_{turkish_english_lower(selected_model)}_mac_sonu_olasiliklari.png"
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(league, season, league_display, season_display, selected_model, selected_game, max_round_next_day, plot_type):
+def main(league, season, league_display, season_display, selected_model, selected_game, max_round_next_day, plot_type, first_n_goals):
 
     try:
 
@@ -250,7 +317,8 @@ def main(league, season, league_display, season_display, selected_model, selecte
             season_display,
             last_round,
             max_round_next_day,
-            plot_type
+            plot_type,
+            first_n_goals
         )
 
     except Exception as e:
