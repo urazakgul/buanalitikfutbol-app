@@ -89,28 +89,32 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
         st.warning("Lütfen bir maç seçin.")
         return
 
-    plot_type = st.sidebar.radio(
-        label="Gösterim Şekli:",
-        options=["Matris", "Sıralı", "Özet"],
-        index=None,
-        label_visibility="hidden"
-    )
-
-    if plot_type is None:
-        st.warning("Lütfen bir gösterim şekli seçin.")
-        return
-
-    if plot_type == "Özet":
-        first_n_goals = st.sidebar.number_input(
-            label="Gol Kombinasyonu:",
-            min_value=2,
-            max_value=121,
-            value=10,
-            label_visibility="hidden",
-            placeholder="Gol Kombinasyonu"
+    if selected_model == "Dixon-Coles":
+        plot_type = st.sidebar.radio(
+            label="Gösterim Şekli:",
+            options=["Matris", "Sıralı", "Özet"],
+            index=None,
+            label_visibility="hidden"
         )
-    else:
-        first_n_goals = 10
+
+        if plot_type is None:
+            st.warning("Lütfen bir gösterim şekli seçin.")
+            return
+
+        if plot_type == "Özet":
+            first_n_goals = st.sidebar.number_input(
+                label="Gol Kombinasyonu:",
+                min_value=2,
+                max_value=121,
+                value=10,
+                label_visibility="hidden",
+                placeholder="Gol Kombinasyonu"
+            )
+        else:
+            first_n_goals = 10
+    elif selected_model == "Bradley-Terry":
+        plot_type = None
+        first_n_goals = None
 
     render_spinner(
         predictive_analytics.main,
@@ -151,7 +155,7 @@ def display_eda_analysis(team_list, change_situations, change_body_parts, league
 def display_predictive_analytics(team_list, change_situations, change_body_parts, league, season):
     selected_model = st.sidebar.selectbox(
         label="Tahmin Yöntemi:",
-        options=["Dixon-Coles"],
+        options=["Dixon-Coles", "Bradley-Terry"],
         index=None,
         label_visibility="hidden",
         placeholder="Tahmin Yöntemleri"
