@@ -2,9 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 import streamlit as st
-from config import change_situations, PLOT_STYLE
-from code.utils.helpers import add_download_button, add_footer, load_filtered_json_files, turkish_upper, turkish_english_lower
-from mplsoccer import VerticalPitch
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
+from code.utils.helpers import add_download_button, add_footer, load_filtered_json_files, turkish_english_lower
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
@@ -91,44 +90,46 @@ def main(category, league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        heat_maps_data = load_filtered_json_files(directories, "heat_maps", league_display, season_display)
-        lineups_data = load_filtered_json_files(directories, "lineups", league_display, season_display)
-        substitutions_data = load_filtered_json_files(directories, "substitutions", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[["tournament","season","round","game_id","home_team","away_team"]]
-        heat_maps_data = heat_maps_data.groupby(["tournament","season","round","game_id","player_name", "player_id"]).agg({'x': 'mean', 'y': 'mean'}).reset_index()
-        lineups_data = lineups_data[["tournament","season","round","game_id","team","player_name", "player_id"]].drop_duplicates()
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        coordinates_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "coordinates_data")
+        lineups_data = load_filtered_json_files(directories, country_display, league_display, season_display, "lineups_data")
+        substitutions_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "substitutions_data")
+
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[["tournament","season","week","game_id","home_team","away_team"]]
+        coordinates_data_df = coordinates_data_df.groupby(["tournament","season","week","game_id","player_name", "player_id"]).agg({'x': 'mean', 'y': 'mean'}).reset_index()
+        lineups_data = lineups_data[["tournament","season","week","game_id","team","player_name", "player_id"]].drop_duplicates()
 
         final_merged_data = pd.merge(
             pd.merge(
-                heat_maps_data,
+                coordinates_data_df,
                 lineups_data,
-                on=["tournament", "season", "round", "game_id", "player_name", "player_id"]
+                on=["tournament", "season", "week", "game_id", "player_name", "player_id"]
             ),
-            games_data,
-            on=["tournament", "season", "round", "game_id"]
+            match_data_df,
+            on=["tournament", "season", "week", "game_id"]
         )
         final_merged_data["team_name"] = final_merged_data.apply(lambda row: row["home_team"] if row["team"] == "home" else row["away_team"], axis=1)
         final_merged_data = final_merged_data.drop(columns=["team","home_team","away_team"])
 
         def check_player_status_and_time(row):
-            player_in = substitutions_data[
-                (substitutions_data["tournament"] == row["tournament"]) &
-                (substitutions_data["season"] == row["season"]) &
-                (substitutions_data["round"] == row["round"]) &
-                (substitutions_data["game_id"] == row["game_id"]) &
-                (substitutions_data["player_in"] == row["player_name"]) &
-                (substitutions_data["player_in_id"] == row["player_id"])
+            player_in = substitutions_data_df[
+                (substitutions_data_df["tournament"] == row["tournament"]) &
+                (substitutions_data_df["season"] == row["season"]) &
+                (substitutions_data_df["week"] == row["week"]) &
+                (substitutions_data_df["game_id"] == row["game_id"]) &
+                (substitutions_data_df["player_in"] == row["player_name"]) &
+                (substitutions_data_df["player_in_id"] == row["player_id"])
             ]
-            player_out = substitutions_data[
-                (substitutions_data["tournament"] == row["tournament"]) &
-                (substitutions_data["season"] == row["season"]) &
-                (substitutions_data["round"] == row["round"]) &
-                (substitutions_data["game_id"] == row["game_id"]) &
-                (substitutions_data["player_out"] == row["player_name"]) &
-                (substitutions_data["player_out_id"] == row["player_id"])
+            player_out = substitutions_data_df[
+                (substitutions_data_df["tournament"] == row["tournament"]) &
+                (substitutions_data_df["season"] == row["season"]) &
+                (substitutions_data_df["week"] == row["week"]) &
+                (substitutions_data_df["game_id"] == row["game_id"]) &
+                (substitutions_data_df["player_out"] == row["player_name"]) &
+                (substitutions_data_df["player_out_id"] == row["player_id"])
             ]
 
             status = "Starting 11"
@@ -148,7 +149,7 @@ def main(category, league, season, league_display, season_display):
 
         if category in ["Kompaktlık","Dikey Yayılım","Yatay Yayılım"]:
             results = []
-            for (tournament, season, round_, game_id), group in final_merged_data.groupby(["tournament", "season", "round", "game_id"]):
+            for (tournament, season, round_, game_id), group in final_merged_data.groupby(["tournament", "season", "week", "game_id"]):
                 team_groups = group.groupby("team_name")
                 for team_name, team_data in team_groups:
                     time_points = team_data["time"].dropna().sort_values().unique().tolist()
@@ -163,7 +164,7 @@ def main(category, league, season, league_display, season_display):
                         results.append({
                             "tournament": tournament,
                             "season": season,
-                            "round": round_,
+                            "week": round_,
                             "game_id": game_id,
                             "team_name": team_name,
                             "start_time": 0,
@@ -188,7 +189,7 @@ def main(category, league, season, league_display, season_display):
                             results.append({
                                 "tournament": tournament,
                                 "season": season,
-                                "round": round_,
+                                "week": round_,
                                 "game_id": game_id,
                                 "team_name": team_name,
                                 "start_time": start,
@@ -200,13 +201,13 @@ def main(category, league, season, league_display, season_display):
                             })
 
             data = pd.DataFrame(results)
-            overall_data = data.groupby(["tournament", "season", "round", "game_id", "team_name"]).agg({
+            overall_data = data.groupby(["tournament", "season", "week", "game_id", "team_name"]).agg({
                 "mean_distance": "mean",
                 "horizontal_spread": "mean",
                 "vertical_spread": "mean"
             }).reset_index()
 
-        last_round = games_data['round'].max()
+        last_round = match_data_df['week'].max()
 
         create_geometry_plot(overall_data, category, league, season, league_display, season_display, last_round)
 

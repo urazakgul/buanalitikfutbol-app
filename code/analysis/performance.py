@@ -1,4 +1,4 @@
-from config import match_performance_translations
+from config import match_performance_translations, LEAGUE_COUNTRY_LOOKUP
 from code.utils.plotters import plot_boxplot, plot_stacked_bar_chart, plot_stacked_horizontal_bar, plot_horizontal_bar
 from code.utils.helpers import load_filtered_json_files, turkish_english_lower
 import os
@@ -7,14 +7,14 @@ import streamlit as st
 
 def clean_percent_columns(dataframe, columns_to_check, target_columns):
     for index, row in dataframe.iterrows():
-        if any(keyword in row["name"] for keyword in columns_to_check):
+        if any(keyword in row["stat_name"] for keyword in columns_to_check):
             for col in target_columns:
                 dataframe.at[index, col] = row[col].replace("%", "").strip()
     return dataframe
 
 def clean_parenthesis_columns(dataframe, columns_to_check, target_columns):
     for index, row in dataframe.iterrows():
-        if any(keyword in row["name"] for keyword in columns_to_check):
+        if any(keyword in row["stat_name"] for keyword in columns_to_check):
             for col in target_columns:
                 if "(" in row[col]:
                     dataframe.at[index, col] = row[col].split("(")[0].strip()
@@ -243,21 +243,21 @@ def create_performance_plot(master_df, result_all_stats_df, subcategory, league,
             ascending=True
         )
     elif subcategory == "Yaptığı ile Kendisine Yapılan Faul Sayısı Farkı":
-        foul_data = master_df[master_df["name"] == "Fauller"].copy()
+        foul_data = master_df[master_df["stat_name"] == "Fauller"].copy()
 
-        foul_data["home_team_stats"] = pd.to_numeric(foul_data["home_team_stats"], errors="coerce")
-        foul_data["away_team_stats"] = pd.to_numeric(foul_data["away_team_stats"], errors="coerce")
+        foul_data["home_team_stat"] = pd.to_numeric(foul_data["home_team_stat"], errors="coerce")
+        foul_data["away_team_stat"] = pd.to_numeric(foul_data["away_team_stat"], errors="coerce")
 
-        foul_data = foul_data.dropna(subset=["home_team_stats", "away_team_stats"])
+        foul_data = foul_data.dropna(subset=["home_team_stat", "away_team_stat"])
 
         fouls_home = foul_data.groupby("home_team").agg(
-            Yaptigi=("home_team_stats", "sum"),
-            Yapilan=("away_team_stats", "sum")
+            Yaptigi=("home_team_stat", "sum"),
+            Yapilan=("away_team_stat", "sum")
         ).reset_index().rename(columns={"home_team": "team"})
 
         fouls_away = foul_data.groupby("away_team").agg(
-            Yaptigi=("away_team_stats", "sum"),
-            Yapilan=("home_team_stats", "sum")
+            Yaptigi=("away_team_stat", "sum"),
+            Yapilan=("home_team_stat", "sum")
         ).reset_index().rename(columns={"away_team": "team"})
 
         total_fouls_summary = (
@@ -395,40 +395,42 @@ def main(subcategory, league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[["game_id","home_team","away_team"]]
+        match_stats_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_stats_data")
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
 
-        game_stats_data = game_stats_data[game_stats_data["period"] == "ALL"]
-        game_stats_data = game_stats_data.rename(columns={
-            "home_team":"home_team_stats",
-            "away_team":"away_team_stats"
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[["game_id","home_team","away_team"]]
+
+        match_stats_data_df = match_stats_data_df[match_stats_data_df["period"] == "ALL"]
+        match_stats_data_df = match_stats_data_df.rename(columns={
+            "home_team":"home_team_stat",
+            "away_team":"away_team_stat"
         })
 
         percent_keywords = ["Ball possession", "Tackles won", "Duels"]
         parenthesis_keywords = ["Final third phase", "Long balls", "Crosses", "Ground duels", "Aerial duels", "Dribbles"]
-        target_columns = ["home_team_stats", "away_team_stats"]
+        target_columns = ["home_team_stat", "away_team_stat"]
 
-        game_stats_data = clean_percent_columns(game_stats_data, percent_keywords, target_columns)
-        game_stats_data = clean_parenthesis_columns(game_stats_data, parenthesis_keywords, target_columns)
+        match_stats_data_df = clean_percent_columns(match_stats_data_df, percent_keywords, target_columns)
+        match_stats_data_df = clean_parenthesis_columns(match_stats_data_df, parenthesis_keywords, target_columns)
 
-        master_df = game_stats_data.merge(
-            games_data,
+        master_df = match_stats_data_df.merge(
+            match_data_df,
             on="game_id"
         )
 
-        master_df["name"] = master_df["name"].replace(match_performance_translations)
+        master_df["stat_name"] = master_df["stat_name"].replace(match_performance_translations)
 
         all_stats_df_list = []
 
-        for stat in master_df["name"].unique():
-            stat_df = master_df[master_df["name"] == stat]
+        for stat in master_df["stat_name"].unique():
+            stat_df = master_df[master_df["stat_name"] == stat]
             temp_df = pd.DataFrame({
                 "team_name": pd.concat([stat_df["home_team"], stat_df["away_team"]]),
                 "stat_name": [stat] * len(stat_df) * 2,
-                "stat_value": pd.concat([stat_df["home_team_stats"], stat_df["away_team_stats"]])
+                "stat_value": pd.concat([stat_df["home_team_stat"], stat_df["away_team_stat"]])
             })
             all_stats_df_list.append(temp_df)
 
@@ -438,7 +440,7 @@ def main(subcategory, league, season, league_display, season_display):
         result_all_stats_df.loc[~result_all_stats_df["stat_value"].str.contains("/", na=False), "stat_value"] = \
             pd.to_numeric(result_all_stats_df["stat_value"], errors="coerce")
 
-        last_round = master_df["round"].max()
+        last_round = master_df["week"].max()
 
         create_performance_plot(master_df, result_all_stats_df, subcategory, league, season, league_display, season_display, last_round)
 

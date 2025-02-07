@@ -12,7 +12,7 @@ from streamlit_option_menu import option_menu
 
 def configure_app():
     st.set_page_config(
-        page_title="Bu Analitik Futbol",
+        page_title="Data FC",
         page_icon=":soccer:",
         layout="wide"
     )
@@ -20,7 +20,7 @@ def configure_app():
 
 def render_sidebar(social_media_links):
     with st.sidebar:
-        st.image("./imgs/buanalitikfutbol.PNG", use_container_width=True)
+        # st.image("./imgs/datafc.PNG", use_container_width=True)
 
         social_media_icons = SocialMediaIcons(
             [link["url"] for link in social_media_links.values()],

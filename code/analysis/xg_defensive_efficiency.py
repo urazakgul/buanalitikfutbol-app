@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
 
@@ -60,17 +60,19 @@ def main(league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
 
-        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
-        shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
-        shot_maps_data = shot_maps_data[shot_maps_data["goal_type"] != "penalty"]
-        shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
-        xg_xga_df = shot_maps_data.groupby(["game_id", "team_name"]).agg(
+        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
+        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+        shots_data_df = shots_data_df[shots_data_df["goal_type"] != "penalty"]
+        shots_data_df["is_goal"] = shots_data_df["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
+
+        xg_xga_df = shots_data_df.groupby(["game_id", "team_name"]).agg(
             xg=("xg", "sum"),
             shots=("xg", "count"),
             goals=("is_goal", "sum")
@@ -78,7 +80,7 @@ def main(league, season, league_display, season_display):
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = games_data[games_data["game_id"] == game_id]
+            match_info = match_data_df[match_data_df["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -113,7 +115,7 @@ def main(league, season, league_display, season_display):
         team_opponent_df['non_penalty_xg_per_shot_against'] = team_opponent_df['xgConceded'] / team_opponent_df['opponent_shots']
         team_opponent_df['non_penalty_shot_conversion_against'] = (team_opponent_df['opponent_goals'] / team_opponent_df['opponent_shots']) * 100
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         create_xg_defence_efficiency_plot(team_opponent_df, league, season, league_display, season_display, last_round)
 

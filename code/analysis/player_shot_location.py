@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from config import change_situations, PLOT_STYLE
+from config import change_situations, PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
@@ -97,39 +97,41 @@ def main(league, season, league_display, season_display, team, player):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[["season", "round", "game_id", "home_team", "away_team"]]
+        match_data = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
 
-        shot_maps_data = shot_maps_data[[
-            "season", "round", "game_id", "player_name", "is_home", "shot_type", "situation",
+        match_data = match_data[match_data["status"] == "Ended"]
+        match_data = match_data[["season", "week", "game_id", "home_team", "away_team"]]
+
+        shots_data_df = shots_data_df[[
+            "season", "week", "game_id", "player_name", "is_home", "shot_type", "situation",
             "goal_mouth_location", "player_coordinates_x", "player_coordinates_y"
         ]]
 
-        shot_maps_data = shot_maps_data.merge(
-            games_data,
-            on=["season", "round", "game_id"],
+        shots_data_df = shots_data_df.merge(
+            match_data,
+            on=["season", "week", "game_id"],
             how="left"
         )
 
-        shot_maps_data["team_name"] = shot_maps_data.apply(
+        shots_data_df["team_name"] = shots_data_df.apply(
             lambda row: row["home_team"] if row["is_home"] else row["away_team"], axis=1
         )
 
-        shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
-        shot_maps_data["player_coordinates_x"] = 100 - shot_maps_data["player_coordinates_x"]
-        shot_maps_data["player_coordinates_y"] = 100 - shot_maps_data["player_coordinates_y"]
+        shots_data_df["is_goal"] = shots_data_df["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
+        shots_data_df["player_coordinates_x"] = 100 - shots_data_df["player_coordinates_x"]
+        shots_data_df["player_coordinates_y"] = 100 - shots_data_df["player_coordinates_y"]
 
-        shot_maps_data["situation"] = shot_maps_data["situation"].replace(change_situations)
+        shots_data_df["situation"] = shots_data_df["situation"].replace(change_situations)
 
-        player_data = shot_maps_data[(shot_maps_data["team_name"] == team) & (shot_maps_data["player_name"] == player)]
+        player_data = shots_data_df[(shots_data_df["team_name"] == team) & (shots_data_df["player_name"] == player)]
 
         df_goals = player_data[player_data["is_goal"] == 1]
         df_non_goals = player_data[player_data["is_goal"] == 0]
 
-        last_round = games_data['round'].max()
+        last_round = match_data['week'].max()
 
         create_player_shot_location_plot(df_goals, df_non_goals, league, season, league_display, season_display, team, last_round, player)
 

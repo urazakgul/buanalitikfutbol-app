@@ -7,11 +7,11 @@ def initialize_session_state():
         st.session_state["selected_season"] = None
 
 def render_welcome_message():
-    st.markdown('<h1 class="big-font">BAF - SÜPER LİG\'e Hoş Geldiniz</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="big-font">Data FC Web Uygulaması</h1>', unsafe_allow_html=True)
     st.markdown("""
         <div>
             <p>
-            BAF (Bu Analitik Futbol) Süper Lig uygulaması, Süper Lig özelinde etkileyici görselleştirmeler ve detaylı analizler sunarak, <mark>veri odaklı bakış açısını</mark> güçlendirmeyi, futbol tutkunlarına <mark>yeni bir perspektif</mark> kazandırmayı ve profesyonellerin <mark>stratejik karar alma</mark> süreçlerinde rol oynamayı hedeflemektedir.
+            Data FC web uygulaması, Süper Lig özelinde etkileyici görselleştirmeler ve detaylı analizler sunarak, <mark>veri odaklı bakış açısını</mark> güçlendirmeyi, futbol tutkunlarına <mark>yeni bir perspektif</mark> kazandırmayı ve profesyonellerin <mark>stratejik karar alma</mark> süreçlerinde rol oynamayı hedeflemektedir.
             </p>
         </div>
     """, unsafe_allow_html=True)

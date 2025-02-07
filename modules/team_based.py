@@ -1,10 +1,9 @@
-import os
 import streamlit as st
 from code.analysis import (
     goal_path,
     shot_location
 )
-from code.utils.helpers import load_filtered_json_files, get_user_selection
+from code.utils.helpers import get_user_selection
 
 def render_spinner(content_function, *args, **kwargs):
     with st.spinner("İçerik hazırlanıyor..."):

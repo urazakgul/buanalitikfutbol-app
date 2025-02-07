@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
 
@@ -53,22 +53,24 @@ def main(league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
-        points_table_data = load_filtered_json_files(directories, "points_table", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
+        standings_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "standings_data")
 
-        points_table_data = points_table_data[points_table_data["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
-        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
-        shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+        standings_data_df = standings_data_df[standings_data_df["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 
-        xg_xga_df = shot_maps_data.groupby(["game_id","team_name"])["xg"].sum().reset_index()
+        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
+        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+
+        xg_xga_df = shots_data_df.groupby(["game_id","team_name"])["xg"].sum().reset_index()
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = games_data[games_data["game_id"] == game_id]
+            match_info = match_data_df[match_data_df["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -86,7 +88,7 @@ def main(league, season, league_display, season_display):
         team_totals_df = xg_xga_df.groupby("team_name")[["xg", "xga"]].sum().reset_index()
         xg_xga_teams = team_totals_df.rename(columns={"xga":"xgConceded"})
 
-        actual_xg_xga_diffs = points_table_data.merge(
+        actual_xg_xga_diffs = standings_data_df.merge(
             xg_xga_teams,
             on="team_name"
         )
@@ -94,7 +96,7 @@ def main(league, season, league_display, season_display):
         actual_xg_xga_diffs["xgConcededDiff"] = actual_xg_xga_diffs["scores_against"] - actual_xg_xga_diffs["xgConceded"]
         xg_xga_gerceklesen_teams = actual_xg_xga_diffs[["team_name","xgDiff","xgConcededDiff"]]
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         create_actual_vs_expected_xg_plot(xg_xga_gerceklesen_teams, league, season, league_display, season_display, last_round)
 

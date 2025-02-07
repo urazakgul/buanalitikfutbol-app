@@ -3,45 +3,45 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from adjustText import adjust_text
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
 
-def create_xg_ladder_plot(filtered_games, shot_maps_data, league, season, league_display, season_display, home_team, away_team, selected_round):
+def create_xg_racer_plot(filtered_games, shots_data_df, league, season, league_display, season_display, home_team, away_team, selected_round):
 
     formatted_season = f"{season_display[:2]}/{season_display[2:]}"
 
-    goal_counts = shot_maps_data[
-        (shot_maps_data["home_team"] == home_team) &
-        (shot_maps_data["away_team"] == away_team) &
-        (shot_maps_data["season"] == formatted_season) &
-        (shot_maps_data["round"] == selected_round)
+    goal_counts = shots_data_df[
+        (shots_data_df["home_team"] == home_team) &
+        (shots_data_df["away_team"] == away_team) &
+        (shots_data_df["season"] == formatted_season) &
+        (shots_data_df["week"] == selected_round)
     ]
 
     home_team_goals = goal_counts[(goal_counts["team_name"] == home_team) & (goal_counts["shot_type"] == "goal")].shape[0]
     away_team_goals = goal_counts[(goal_counts["team_name"] == away_team) & (goal_counts["shot_type"] == "goal")].shape[0]
     match_score = f"{home_team_goals} - {away_team_goals}"
 
-    filtered_shotmaps_data = shot_maps_data[
-        (shot_maps_data["home_team"] == home_team) &
-        (shot_maps_data["away_team"] == away_team) &
-        (shot_maps_data["season"] == formatted_season) &
-        (shot_maps_data["round"] == selected_round)
+    filtered_shotmaps_data = shots_data_df[
+        (shots_data_df["home_team"] == home_team) &
+        (shots_data_df["away_team"] == away_team) &
+        (shots_data_df["season"] == formatted_season) &
+        (shots_data_df["week"] == selected_round)
     ].reset_index(drop=True)
 
     injury_time_1 = filtered_games[
         (filtered_games["home_team"] == home_team) &
         (filtered_games["away_team"] == away_team) &
         (filtered_games["season"] == formatted_season) &
-        (filtered_games["round"] == selected_round)
+        (filtered_games["week"] == selected_round)
     ]["injury_time_1"].iloc[0]
     injury_time_2 = filtered_games[
         (filtered_games["home_team"] == home_team) &
         (filtered_games["away_team"] == away_team) &
         (filtered_games["season"] == formatted_season) &
-        (filtered_games["round"] == selected_round)
+        (filtered_games["week"] == selected_round)
     ]["injury_time_2"].iloc[0]
 
     xg_max_time_firsthalf = filtered_shotmaps_data[filtered_shotmaps_data["period"] == "First Half"]["net_time"].iloc[0]
@@ -356,29 +356,31 @@ def main(league, season, league_display, season_display, selected_round, home_te
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        filtered_games = games_data[
-            (games_data["round"] == selected_round) &
-            (games_data["home_team"] == home_team) &
-            (games_data["away_team"] == away_team)
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
+
+        filtered_games = match_data_df[
+            (match_data_df["week"] == selected_round) &
+            (match_data_df["home_team"] == home_team) &
+            (match_data_df["away_team"] == away_team)
         ]
 
-        shot_maps_data = shot_maps_data.merge(
+        shots_data_df = shots_data_df.merge(
             filtered_games,
-            on=["tournament","season","round","game_id"]
+            on=["tournament","season","week","game_id"]
         )
-        shot_maps_data["team_name"] = shot_maps_data.apply(
+        shots_data_df["team_name"] = shots_data_df.apply(
             lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1
         )
-        shot_maps_data["period"] = shot_maps_data["time"].apply(lambda x: "First Half" if x <= 45 else "Second Half")
-        shot_maps_data["injury_time_1"] = shot_maps_data["injury_time_1"].fillna(0)
-        shot_maps_data["injury_time_2"] = shot_maps_data["injury_time_2"].fillna(0)
-        shot_maps_data["added_time"] = shot_maps_data["added_time"].fillna(0)
-        shot_maps_data["net_time"] = shot_maps_data["time"] + shot_maps_data["added_time"]
+        shots_data_df["period"] = shots_data_df["time"].apply(lambda x: "First Half" if x <= 45 else "Second Half")
+        shots_data_df["injury_time_1"] = shots_data_df["injury_time_1"].fillna(0)
+        shots_data_df["injury_time_2"] = shots_data_df["injury_time_2"].fillna(0)
+        shots_data_df["added_time"] = shots_data_df["added_time"].fillna(0)
+        shots_data_df["net_time"] = shots_data_df["time"] + shots_data_df["added_time"]
 
-        create_xg_ladder_plot(filtered_games, shot_maps_data, league, season, league_display, season_display, home_team, away_team, selected_round)
+        create_xg_racer_plot(filtered_games, shots_data_df, league, season, league_display, season_display, home_team, away_team, selected_round)
 
     except Exception as e:
         st.error("Uygun veri bulunamadı.")

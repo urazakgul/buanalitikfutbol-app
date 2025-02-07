@@ -1,4 +1,4 @@
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import load_filtered_json_files, add_footer, add_download_button, turkish_english_lower
 from code.models.dixon_coles import solve_parameters_cached, dixon_coles_simulate_match_cached
 from code.models.bradley_terry import solve_bt_ratings_cached, bt_forecast_match_cached
@@ -225,19 +225,21 @@ def main(league, season, league_display, season_display, selected_model, selecte
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
-        shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
+
+        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
+        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
 
         goal_counts = (
-            shot_maps_data[shot_maps_data["shot_type"] == "goal"]
+            shots_data_df[shots_data_df["shot_type"] == "goal"]
             .groupby(["game_id", "team_name"])
             .size()
             .reset_index(name="goals")
         )
-        merged = shot_maps_data[["game_id", "home_team", "away_team"]].drop_duplicates()
+        merged = shots_data_df[["game_id", "home_team", "away_team"]].drop_duplicates()
         merged = merged.merge(
             goal_counts, left_on=["game_id", "home_team"], right_on=["game_id", "team_name"], how="left"
         ).rename(columns={"goals": "home_team_goals"}).drop(columns=["team_name"])
@@ -266,7 +268,7 @@ def main(league, season, league_display, season_display, selected_model, selecte
             }).sort_values("Rating", ascending=False)
             model_df["Team"] = model_df["Team"].replace("home_field_advantage", "Ev Sahibi Avantajı")
 
-        last_round = games_data[games_data["status"] == "Ended"]["round"].max()
+        last_round = match_data_df[match_data_df["status"] == "Ended"]["week"].max()
 
         create_predictive_analytics_plot(
             model_df,

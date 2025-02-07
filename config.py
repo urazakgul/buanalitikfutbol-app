@@ -261,3 +261,7 @@ game_stats_group_name_translations = {
     "Defending": "Savunma",
     "Goalkeeping": "Kalecilik"
 }
+
+LEAGUE_COUNTRY_LOOKUP = {
+    "super_lig": "turkey"
+}

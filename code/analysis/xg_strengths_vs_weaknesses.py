@@ -2,7 +2,7 @@ import os
 import numpy as np
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
-from config import change_situations, change_body_parts, PLOT_STYLE
+from config import change_situations, change_body_parts, PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 import matplotlib.pyplot as plt
 
 plt.style.use(PLOT_STYLE)
@@ -75,25 +75,27 @@ def main(league, season, league_display, season_display, situation_type=None, bo
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
 
-        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
-        shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
-        shot_maps_data["situation"] = shot_maps_data["situation"].replace(change_situations)
-        shot_maps_data["body_part"] = shot_maps_data["body_part"].replace(change_body_parts)
+        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
+        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+
+        shots_data_df["situation"] = shots_data_df["situation"].replace(change_situations)
+        shots_data_df["body_part"] = shots_data_df["body_part"].replace(change_body_parts)
 
         if category == "situation" and situation_type is not None:
-            filtered_data = shot_maps_data[shot_maps_data["situation"] == situation_type]
+            filtered_data = shots_data_df[shots_data_df["situation"] == situation_type]
             grouping_columns = ["game_id", "team_name", "situation"]
         elif category == "body_part" and body_part_type is not None:
-            filtered_data = shot_maps_data[shot_maps_data["body_part"] == body_part_type]
+            filtered_data = shots_data_df[shots_data_df["body_part"] == body_part_type]
             grouping_columns = ["game_id", "team_name", "body_part"]
         elif category is None:
-            filtered_data = shot_maps_data
+            filtered_data = shots_data_df
             grouping_columns = ["game_id", "team_name"]
 
         xg_xga_df = filtered_data.groupby(grouping_columns)["xg"].sum().reset_index()
@@ -107,7 +109,7 @@ def main(league, season, league_display, season_display, situation_type=None, bo
 
         for game_id in xg_xga_df["game_id"].unique():
             game_data = xg_xga_df[xg_xga_df["game_id"] == game_id]
-            match_info = games_data[games_data["game_id"] == game_id]
+            match_info = match_data_df[match_data_df["game_id"] == game_id]
 
             if not match_info.empty:
                 home_team = match_info["home_team"].values[0]
@@ -135,7 +137,7 @@ def main(league, season, league_display, season_display, situation_type=None, bo
         team_totals_df["xgDiff"] = team_totals_df["goals"] - team_totals_df["xg"]
         team_totals_df["xgaDiff"] = team_totals_df["conceded_goals"] - team_totals_df["xga"]
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         if plot_type == "Üretilen xG ve Yenen xG (xGA)":
             create_strength_vs_weakness_xg_plot(

@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, turkish_english_lower
 from mplsoccer import VerticalPitch
 import matplotlib.pyplot as plt
@@ -55,15 +55,17 @@ def main(league, season, league_display, season_display, team, player):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        heat_maps_data = load_filtered_json_files(directories, "heat_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[['game_id', 'tournament', 'season', 'round', 'home_team', 'away_team']]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        heat_maps_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "coordinates_data")
 
-        hmap_data_df = heat_maps_data.merge(
-            games_data,
-            on=['game_id', 'tournament', 'season', 'round'],
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[['game_id', 'tournament', 'season', 'week', 'home_team', 'away_team']]
+
+        hmap_data_df = heat_maps_data_df.merge(
+            match_data_df,
+            on=['game_id', 'tournament', 'season', 'week'],
             how='left'
         )
 
@@ -77,7 +79,7 @@ def main(league, season, league_display, season_display, team, player):
             (hmap_data_df['player_name'] == player)
         ]
 
-        last_round = games_data['round'].max()
+        last_round = match_data_df['week'].max()
 
         create_player_heatmap_plot(filtered_hmap_data_df, league, season, league_display, season_display, team, last_round, player)
 

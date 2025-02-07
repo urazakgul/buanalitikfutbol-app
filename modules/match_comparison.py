@@ -1,7 +1,8 @@
 import os
 import streamlit as st
-from code.analysis.xg_ladder import main as xg_ladder_main
+from code.analysis.xg_racer import main as xg_racer_main
 from code.utils.helpers import load_filtered_json_files, get_user_selection
+from config import LEAGUE_COUNTRY_LOOKUP
 
 def render_spinner(content_function, *args, **kwargs):
     with st.spinner("İçerik hazırlanıyor..."):
@@ -32,12 +33,13 @@ def display_xg_analysis(team_list, change_situations, change_body_parts):
         return
 
     if analysis_type == "xG Merdiveni":
-        directories = os.path.join(os.path.dirname(__file__), '../data/sofascore/raw/')
-        games_data = load_filtered_json_files(directories, 'games', league_display, season_display)
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[['round', 'home_team', 'away_team']]
+        directories = os.path.join(os.path.dirname(__file__), "../data/sofascore/raw/")
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[["week", "home_team", "away_team"]]
 
-        rounds = games_data['round'].unique()
+        rounds = match_data_df["week"].unique()
         selected_round = st.sidebar.selectbox(
             "Haftalar",
             sorted(rounds),
@@ -51,7 +53,7 @@ def display_xg_analysis(team_list, change_situations, change_body_parts):
             st.warning("Lütfen bir hafta seçin.")
             return
 
-        filtered_games = games_data[games_data['round'] == selected_round]
+        filtered_games = match_data_df[match_data_df["week"] == selected_round]
         team_pairs = filtered_games.apply(lambda row: f"{row['home_team']} - {row['away_team']}", axis=1)
 
         selected_match = st.sidebar.selectbox(
@@ -68,7 +70,7 @@ def display_xg_analysis(team_list, change_situations, change_body_parts):
             return
 
         home_team, away_team = selected_match.split(" - ")
-        xg_ladder_main(
+        xg_racer_main(
             league,
             season,
             league_display,

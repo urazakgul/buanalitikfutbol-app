@@ -1,9 +1,8 @@
 import os
 import pandas as pd
-import numpy as np
 import streamlit as st
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_upper, sort_turkish
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from matplotlib.ticker import MultipleLocator
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -12,8 +11,8 @@ plt.style.use(PLOT_STYLE)
 
 def create_win_rate_plot(ts_df_with_location, league, season, league_display, season_display, last_round):
 
-    global_x_min = ts_df_with_location["round"].min()
-    global_x_max = ts_df_with_location["round"].max()
+    global_x_min = ts_df_with_location["week"].min()
+    global_x_max = ts_df_with_location["week"].max()
     global_y_min = 0
     global_y_max = 100
 
@@ -33,8 +32,8 @@ def create_win_rate_plot(ts_df_with_location, league, season, league_display, se
         home_data = team_data[team_data["location"] == "home"]
         away_data = team_data[team_data["location"] == "away"]
 
-        ax.plot(home_data["round"], home_data["win_rate"], label="Home Win Rate", color="blue", marker="o")
-        ax.plot(away_data["round"], away_data["win_rate"], label="Away Win Rate", color="darkred", marker="o")
+        ax.plot(home_data["week"], home_data["win_rate"], label="Home Win Rate", color="blue", marker="o")
+        ax.plot(away_data["week"], away_data["win_rate"], label="Away Win Rate", color="darkred", marker="o")
 
         ax.set_title(turkish_upper(team), pad=35)
         ax.grid(True)
@@ -94,37 +93,41 @@ def main(league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[["tournament", "season", "round", "game_id", "home_team", "away_team"]]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
 
-        shot_maps_data = shot_maps_data.merge(
-            games_data,
-            on=["tournament", "season", "round", "game_id"],
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[["tournament", "season", "week", "game_id", "home_team", "away_team"]]
+
+        shots_data_df = shots_data_df.merge(
+            match_data_df,
+            on=["tournament", "season", "week", "game_id"],
             how="left"
         )
-        shot_maps_data["team_name"] = shot_maps_data.apply(
+        shots_data_df["team_name"] = shots_data_df.apply(
             lambda row: row["home_team"] if row["is_home"] else row["away_team"], axis=1
         )
-        shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
-        shot_maps_data_goal = shot_maps_data[shot_maps_data['is_goal'] == 1]
-        shot_maps_data_goal = shot_maps_data_goal[["tournament", "season", "round", "game_id", "team_name"]]
+        shots_data_df["is_goal"] = shots_data_df["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
+        shot_maps_data_goal = shots_data_df[shots_data_df['is_goal'] == 1]
+        shot_maps_data_goal = shot_maps_data_goal[["tournament", "season", "week", "game_id", "team_name"]]
 
-        games_data["home_score"] = 0
-        games_data["away_score"] = 0
+        match_data_df["home_score"] = 0
+        match_data_df["away_score"] = 0
 
-        for i, row in games_data.iterrows():
+        match_data_df = match_data_df.sort_values(by=["week"], ascending=[True])
+
+        for i, row in match_data_df.iterrows():
             home_team_shots = len(shot_maps_data_goal[(shot_maps_data_goal["game_id"] == row["game_id"]) & (shot_maps_data_goal["team_name"] == row["home_team"])])
             away_team_shots = len(shot_maps_data_goal[(shot_maps_data_goal["game_id"] == row["game_id"]) & (shot_maps_data_goal["team_name"] == row["away_team"])])
-            games_data.at[i, "home_score"] = home_team_shots
-            games_data.at[i, "away_score"] = away_team_shots
+            match_data_df.at[i, "home_score"] = home_team_shots
+            match_data_df.at[i, "away_score"] = away_team_shots
 
         team_stats = {}
         time_series_data_with_location = []
 
-        for _, row in games_data.iterrows():
+        for _, row in match_data_df.iterrows():
             for team, location in zip([row['home_team'], row['away_team']], ['home', 'away']):
                 if team not in team_stats:
                     team_stats[team] = {
@@ -156,7 +159,7 @@ def main(league, season, league_display, season_display):
                     home_win_rate = (home_wins + 0.5 * home_draws) / home_games * 100 if home_games > 0 else 0
                     time_series_data_with_location.append({
                         'team': team,
-                        'round': row['round'],
+                        'week': row['week'],
                         'location': location,
                         'win_rate': home_win_rate
                     })
@@ -167,19 +170,19 @@ def main(league, season, league_display, season_display):
                     away_win_rate = (away_wins + 0.5 * away_draws) / away_games * 100 if away_games > 0 else 0
                     time_series_data_with_location.append({
                         'team': team,
-                        'round': row['round'],
+                        'week': row['week'],
                         'location': location,
                         'win_rate': away_win_rate
                     })
 
         ts_df_with_location = pd.DataFrame(time_series_data_with_location)
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         create_win_rate_plot(ts_df_with_location, league, season, league_display, season_display, last_round)
 
     except Exception as e:
-        st.error(f"Uygun veri bulunamadı.{e}")
+        st.error("Uygun veri bulunamadı.")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">

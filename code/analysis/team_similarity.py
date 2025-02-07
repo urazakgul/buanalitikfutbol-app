@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 from config import match_performance_translations, game_stats_group_name_translations
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -15,14 +15,14 @@ plt.style.use(PLOT_STYLE)
 
 def clean_percent_columns(dataframe, columns_to_check, target_columns):
     for index, row in dataframe.iterrows():
-        if any(keyword in row["name"] for keyword in columns_to_check):
+        if any(keyword in row["stat_name"] for keyword in columns_to_check):
             for col in target_columns:
                 dataframe.at[index, col] = row[col].replace("%", "").strip()
     return dataframe
 
 def clean_parenthesis_columns(dataframe, columns_to_check, target_columns):
     for index, row in dataframe.iterrows():
-        if any(keyword in row["name"] for keyword in columns_to_check):
+        if any(keyword in row["stat_name"] for keyword in columns_to_check):
             for col in target_columns:
                 if "(" in row[col]:
                     dataframe.at[index, col] = row[col].split("(")[0].strip()
@@ -82,7 +82,7 @@ def process_exceptions(dataframe, exc_list):
 
     return pd.concat(processed_df_list, ignore_index=True)
 
-def update_game_stats_categories(game_stats_data):
+def update_game_stats_categories(match_stats_data_df):
     CATEGORY_MAPPINGS = {
         "Topa Sahip Olma": "Paslar",
         "Beklenen Goller": "Hücum",
@@ -98,20 +98,20 @@ def update_game_stats_categories(game_stats_data):
 
     REMOVE_STATS = ["Toplam Şutlar", "Müdahaleler"]
 
-    game_stats_data.loc[
-        (game_stats_data["group_name"] == "Genel Görünüm") &
-        (game_stats_data["name"].isin(CATEGORY_MAPPINGS.keys())),
+    match_stats_data_df.loc[
+        (match_stats_data_df["group_name"] == "Genel Görünüm") &
+        (match_stats_data_df["stat_name"].isin(CATEGORY_MAPPINGS.keys())),
         "group_name"
-    ] = game_stats_data["name"].map(CATEGORY_MAPPINGS)
+    ] = match_stats_data_df["stat_name"].map(CATEGORY_MAPPINGS)
 
-    game_stats_data = game_stats_data[
+    match_stats_data_df = match_stats_data_df[
         ~(
-            (game_stats_data["group_name"] == "Genel Görünüm") &
-            (game_stats_data["name"].isin(REMOVE_STATS))
+            (match_stats_data_df["group_name"] == "Genel Görünüm") &
+            (match_stats_data_df["stat_name"].isin(REMOVE_STATS))
         )
     ]
 
-    return game_stats_data
+    return match_stats_data_df
 
 def create_team_similarity_plot(similarity_df, league, season, league_display, season_display, team, last_round, selected_categories, similarity_algorithm, top_features_pc1, top_features_pc2):
     if similarity_algorithm == "Kosinüs Benzerliği":
@@ -146,12 +146,16 @@ def create_team_similarity_plot(similarity_df, league, season, league_display, s
 
         ax.axvline(x=0, color="black", linewidth=1, alpha=0.3)
 
-        for i, (similarity, bar) in enumerate(zip(similarity_df["similarity"], bars)):
+        for similarity, bar in zip(similarity_df["similarity"], bars):
+            x_position = bar.get_width() + 0.01 if similarity >= 0 else bar.get_width() - 0.01
+            ha_value = "left" if similarity >= 0 else "right"
+
             ax.text(
-                bar.get_width() + 0.01,
+                x_position,
                 bar.get_y() + bar.get_height() / 2,
                 f"{similarity:.2f}",
                 va="center",
+                ha=ha_value,
                 fontsize=10
             )
 
@@ -212,20 +216,22 @@ def main(league, season, league_display, season_display, team, selected_categori
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        game_stats_data = load_filtered_json_files(directories, "game_stats", league_display, season_display)
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_stats_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_stats_data")
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
 
-        game_stats_data["name"] = game_stats_data["name"].replace(match_performance_translations)
-        game_stats_data["group_name"] = game_stats_data["group_name"].replace(game_stats_group_name_translations)
-        game_stats_data = update_game_stats_categories(game_stats_data)
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
-        games_data = games_data[["game_id", "home_team", "away_team"]]
+        match_stats_data_df["stat_name"] = match_stats_data_df["stat_name"].replace(match_performance_translations)
+        match_stats_data_df["group_name"] = match_stats_data_df["group_name"].replace(game_stats_group_name_translations)
+        match_stats_data_df = update_game_stats_categories(match_stats_data_df)
 
-        game_stats_data = game_stats_data[game_stats_data["period"] == "ALL"]
-        game_stats_data = game_stats_data.rename(
-            columns={"home_team": "home_team_stats", "away_team": "away_team_stats"}
+        match_data_df = match_data_df[["game_id", "home_team", "away_team"]]
+
+        match_stats_data_df = match_stats_data_df[match_stats_data_df["period"] == "ALL"]
+        match_stats_data_df = match_stats_data_df.rename(
+            columns={"home_team": "home_team_stat", "away_team": "away_team_stat"}
         )
 
         percent_keywords = ["Topa Sahip Olma", "Kazanılan Müdahaleler", "İkili Mücadeleler"]
@@ -237,7 +243,7 @@ def main(league, season, league_display, season_display, team, selected_categori
             "Hava Topu Mücadeleleri",
             "Çalımlar",
         ]
-        target_columns = ["home_team_stats", "away_team_stats"]
+        target_columns = ["home_team_stat", "away_team_stat"]
 
         exc_list = [
             "Topa Sahip Olma",
@@ -251,29 +257,29 @@ def main(league, season, league_display, season_display, team, selected_categori
             "Çalımlar",
         ]
 
-        game_stats_data = clean_percent_columns(game_stats_data, percent_keywords, target_columns)
-        game_stats_data = clean_parenthesis_columns(game_stats_data, parenthesis_keywords, target_columns)
+        match_stats_data_df = clean_percent_columns(match_stats_data_df, percent_keywords, target_columns)
+        match_stats_data_df = clean_parenthesis_columns(match_stats_data_df, parenthesis_keywords, target_columns)
 
-        game_stats_data.loc[
-            ~game_stats_data["home_team_stats"].str.contains("/", na=False), "home_team_stats"
-        ] = pd.to_numeric(game_stats_data["home_team_stats"], errors="coerce")
+        match_stats_data_df.loc[
+            ~match_stats_data_df["home_team_stat"].str.contains("/", na=False), "home_team_stat"
+        ] = pd.to_numeric(match_stats_data_df["home_team_stat"], errors="coerce")
 
-        game_stats_data.loc[
-            ~game_stats_data["away_team_stats"].str.contains("/", na=False), "away_team_stats"
-        ] = pd.to_numeric(game_stats_data["away_team_stats"], errors="coerce")
+        match_stats_data_df.loc[
+            ~match_stats_data_df["away_team_stat"].str.contains("/", na=False), "away_team_stat"
+        ] = pd.to_numeric(match_stats_data_df["away_team_stat"], errors="coerce")
 
-        master_df = game_stats_data.merge(games_data, on="game_id")
+        master_df = match_stats_data_df.merge(match_data_df, on="game_id")
 
         all_stats_df_list = []
 
-        for stat in master_df["name"].unique():
-            stat_df = master_df[master_df["name"] == stat]
+        for stat in master_df["stat_name"].unique():
+            stat_df = master_df[master_df["stat_name"] == stat]
             temp_df = pd.DataFrame(
                 {
                     "team_name": pd.concat([stat_df["home_team"], stat_df["away_team"]]),
                     "stat_name": [stat] * len(stat_df) * 2,
                     "group_name": pd.concat([stat_df["group_name"], stat_df["group_name"]]),
-                    "stat_value": pd.concat([stat_df["home_team_stats"], stat_df["away_team_stats"]]),
+                    "stat_value": pd.concat([stat_df["home_team_stat"], stat_df["away_team_stat"]]),
                 }
             )
             all_stats_df_list.append(temp_df)
@@ -330,7 +336,7 @@ def main(league, season, league_display, season_display, team, selected_categori
             top_features_pc1 = top_loadings["PC1"].nlargest(5).index.tolist()
             top_features_pc2 = top_loadings["PC2"].nlargest(5).index.tolist()
 
-        last_round = master_df["round"].max()
+        last_round = master_df["week"].max()
 
         create_team_similarity_plot(
             similarity_df,

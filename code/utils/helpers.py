@@ -42,25 +42,18 @@ def add_footer(fig, data_source="SofaScore", prepared_by="@urazdev", extra_text=
         color="gray"
     )
 
-# @st.cache_data(show_spinner=False)
-# def load_filtered_json_files(directory: str, subdirectory: str, league: str, season: str) -> pd.DataFrame:
-#     path = os.path.join(directory, subdirectory, f"sofascore_{subdirectory}_{league}_{season}.json")
-#     files = glob.glob(path)
-
-#     return pd.concat((pd.read_json(file, orient="records", lines=True) for file in files), ignore_index=True)
-
 @st.cache_data(show_spinner=False)
-def load_filtered_json_files(directory: str, subdirectory: str, league: str, season: str) -> pd.DataFrame:
-    path = os.path.join(directory, subdirectory, f"sofascore_{subdirectory}_{league}_{season}.json*")
+def load_filtered_json_files(directory: str, country: str, league: str, season: str, subdirectory: str) -> pd.DataFrame:
+    path = os.path.join(directory, subdirectory, f"sofascore_{country}_{league}_{season}_{subdirectory}.json*")
     files = glob.glob(path)
 
     dataframes = []
     for file in files:
         if file.endswith(".gz"):
             with gzip.open(file, 'rt', encoding='utf-8') as f:
-                dataframes.append(pd.read_json(f, orient="records", lines=True))
+                dataframes.append(pd.read_json(f))
         else:
-            dataframes.append(pd.read_json(file, orient="records", lines=True))
+            dataframes.append(pd.read_json(file))
 
     return pd.concat(dataframes, ignore_index=True) if dataframes else pd.DataFrame()
 

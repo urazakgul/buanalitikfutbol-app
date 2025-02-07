@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import streamlit as st
-from config import team_list_by_season, PLOT_STYLE
+from config import team_list_by_season, PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
 import matplotlib.patches as mpatches
 import matplotlib.ticker as ticker
@@ -12,8 +12,8 @@ plt.style.use(PLOT_STYLE)
 
 def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, season_display, teams, last_round, plot_type):
 
-    global_x_min = xg_goal_teams["round"].min()
-    global_x_max = xg_goal_teams["round"].max()
+    global_x_min = xg_goal_teams["week"].min()
+    global_x_max = xg_goal_teams["week"].max()
 
     if plot_type == "Kümülatif xG ve Gol (Haftalık Seri)":
         global_y_min = min(xg_goal_teams["cumulative_goal_count"].min(), xg_goal_teams["cumulative_total_xg"].min())
@@ -35,10 +35,10 @@ def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, sea
         ax = axes[i]
 
         if plot_type == "Kümülatif xG ve Gol (Haftalık Seri)":
-            ax.plot(team_data["round"], team_data["cumulative_goal_count"], label="Kümülatif Gol", color="blue")
-            ax.plot(team_data["round"], team_data["cumulative_total_xg"], label="Kümülatif xG", color="red")
+            ax.plot(team_data["week"], team_data["cumulative_goal_count"], label="Kümülatif Gol", color="blue")
+            ax.plot(team_data["week"], team_data["cumulative_total_xg"], label="Kümülatif xG", color="red")
             ax.fill_between(
-                team_data["round"],
+                team_data["week"],
                 team_data["cumulative_goal_count"],
                 team_data["cumulative_total_xg"],
                 where=(team_data["cumulative_goal_count"] >= team_data["cumulative_total_xg"]),
@@ -47,7 +47,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, sea
                 interpolate=True
             )
             ax.fill_between(
-                team_data["round"],
+                team_data["week"],
                 team_data["cumulative_goal_count"],
                 team_data["cumulative_total_xg"],
                 where=(team_data["cumulative_goal_count"] < team_data["cumulative_total_xg"]),
@@ -74,7 +74,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, sea
             diff = team_data["cumulative_goal_count"] - team_data["cumulative_total_xg"]
             team_data["diff"] = diff.round(5)
             for i in range(len(team_data) - 1):
-                x = team_data["round"].iloc[i:i+2]
+                x = team_data["week"].iloc[i:i+2]
                 y = team_data["diff"].iloc[i:i+2]
 
                 if y.mean() >= 0:
@@ -83,7 +83,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, sea
                     ax.plot(x, y, color="darkred", linewidth=3)
 
             ax.fill_between(
-                team_data["round"],
+                team_data["week"],
                 0,
                 team_data["diff"],
                 where=(team_data["diff"] >= 0),
@@ -92,7 +92,7 @@ def create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, sea
                 interpolate=True
             )
             ax.fill_between(
-                team_data["round"],
+                team_data["week"],
                 0,
                 team_data["diff"],
                 where=(team_data["diff"] < 0),
@@ -146,41 +146,43 @@ def main(league, season, league_display, season_display, plot_type):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
-        points_table_data = load_filtered_json_files(directories, "points_table", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
+        standings_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "standings_data")
 
-        points_table_data = points_table_data[points_table_data["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
-        shot_maps_data = shot_maps_data.merge(games_data, on=["tournament", "season", "round", "game_id"])
-        shot_maps_data["team_name"] = shot_maps_data.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
+        standings_data_df = standings_data_df[standings_data_df["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 
-        xg_by_team = shot_maps_data.groupby(["team_name", "round"])["xg"].sum().reset_index(name="total_xg")
-        xg_by_team_pivot = xg_by_team.pivot(index="team_name", columns="round", values="total_xg").fillna(0)
-        xg_by_team_long = xg_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="round", value_name="total_xg")
+        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
+        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
 
-        goal_shots = shot_maps_data[shot_maps_data["shot_type"] == "goal"]
-        goal_shots_by_team = goal_shots.groupby(["team_name", "round"]).size().reset_index(name="goal_count")
-        goal_shots_by_team_pivot = goal_shots_by_team.pivot(index="team_name", columns="round", values="goal_count").fillna(0)
-        goal_shots_by_team_long = goal_shots_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="round", value_name="goal_count")
+        xg_by_team = shots_data_df.groupby(["team_name", "week"])["xg"].sum().reset_index(name="total_xg")
+        xg_by_team_pivot = xg_by_team.pivot(index="team_name", columns="week", values="total_xg").fillna(0)
+        xg_by_team_long = xg_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="week", value_name="total_xg")
 
-        xg_goal_teams = pd.merge(xg_by_team_long, goal_shots_by_team_long, on=["team_name", "round"])
-        xg_goal_teams = xg_goal_teams.sort_values(by=["team_name", "round"])
+        goal_shots = shots_data_df[shots_data_df["shot_type"] == "goal"]
+        goal_shots_by_team = goal_shots.groupby(["team_name", "week"]).size().reset_index(name="goal_count")
+        goal_shots_by_team_pivot = goal_shots_by_team.pivot(index="team_name", columns="week", values="goal_count").fillna(0)
+        goal_shots_by_team_long = goal_shots_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="week", value_name="goal_count")
+
+        xg_goal_teams = pd.merge(xg_by_team_long, goal_shots_by_team_long, on=["team_name", "week"])
+        xg_goal_teams = xg_goal_teams.sort_values(by=["team_name", "week"])
         xg_goal_teams["cumulative_total_xg"] = xg_goal_teams.groupby("team_name")["total_xg"].cumsum()
         xg_goal_teams["cumulative_goal_count"] = xg_goal_teams.groupby("team_name")["goal_count"].cumsum()
         xg_goal_teams["cum_goal_xg_diff"] = xg_goal_teams["cumulative_goal_count"] - xg_goal_teams["cumulative_total_xg"]
 
         xg_goal_teams["cumulative_goal_count"] = pd.to_numeric(xg_goal_teams["cumulative_goal_count"], errors="coerce")
         xg_goal_teams["cumulative_total_xg"] = pd.to_numeric(xg_goal_teams["cumulative_total_xg"], errors="coerce")
-        xg_goal_teams["round"] = pd.to_numeric(xg_goal_teams["round"], errors="coerce")
+        xg_goal_teams["week"] = pd.to_numeric(xg_goal_teams["week"], errors="coerce")
 
-        xg_goal_teams = xg_goal_teams.dropna(subset=["cumulative_goal_count", "cumulative_total_xg", "round"])
+        xg_goal_teams = xg_goal_teams.dropna(subset=["cumulative_goal_count", "cumulative_total_xg", "week"])
 
         teams = [team for team in team_list_by_season[season_display] if team in xg_goal_teams["team_name"].unique()]
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         if plot_type == "Kümülatif xG ve Gol (Haftalık Seri)":
             create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, season_display, teams, last_round, plot_type="Kümülatif xG ve Gol (Haftalık Seri)")

@@ -5,20 +5,21 @@ from code.analysis import (
     predictive_analytics
 )
 from code.utils.helpers import load_filtered_json_files, get_user_selection
-from config import match_performance_translations, match_performance_binary
+from config import match_performance_translations, match_performance_binary, LEAGUE_COUNTRY_LOOKUP
 
 def render_spinner(content_function, *args, **kwargs):
     with st.spinner("İçerik hazırlanıyor..."):
         content_function(*args, **kwargs)
 
 def load_game_data(directories, league_display, season_display):
-    games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-    games_data_ended = games_data[games_data["status"] == "Ended"]
+    country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
+    match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+    match_data_df_ended = match_data_df[match_data_df["status"] == "Ended"]
 
-    if not games_data_ended.empty:
-        max_round = games_data_ended["round"].max()
+    if not match_data_df_ended.empty:
+        max_round = match_data_df_ended["week"].max()
         max_round_next_day = max_round + 1
-        games_data_next_day = games_data[games_data["round"] == max_round_next_day]
+        games_data_next_day = match_data_df[match_data_df["week"] == max_round_next_day]
 
         if not games_data_next_day.empty:
             return games_data_next_day, max_round_next_day

@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from config import PLOT_STYLE
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, turkish_english_lower
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
@@ -63,15 +63,17 @@ def main(subcategory, league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        lineups_data = load_filtered_json_files(directories, "lineups", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
+
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        lineups_data = load_filtered_json_files(directories, country_display, league_display, season_display, "lineups_data")
         lineups_data = lineups_data[lineups_data["stat_name"] == "rating"]
 
-        games_data = games_data[games_data["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
         lineups_games_data = lineups_data.merge(
-            games_data,
-            on=["tournament","season","round","game_id"],
+            match_data_df,
+            on=["tournament","season","week","game_id"],
             how="right"
         )
 
@@ -79,7 +81,7 @@ def main(subcategory, league, season, league_display, season_display):
             lambda row: row["home_team"] if row["team"] == "home" else row["away_team"], axis=1
         )
 
-        last_round = games_data["round"].max()
+        last_round = match_data_df["week"].max()
 
         if subcategory == "Ortalama-Standart Sapma (Genel)":
             rating_data = lineups_games_data.groupby("team_name")["stat_value"].agg(["mean", "std"]).reset_index()

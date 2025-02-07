@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import streamlit as st
-from config import change_situations, change_body_parts, change_goal_locations, change_player_positions, PLOT_STYLE
+from config import change_situations, change_body_parts, change_goal_locations, change_player_positions, PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
 from code.utils.helpers import add_download_button, load_filtered_json_files, add_footer, sort_turkish, turkish_english_lower
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -56,30 +56,32 @@ def main(category, subcategory, league, season, league_display, season_display):
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
 
-        games_data = load_filtered_json_files(directories, "games", league_display, season_display)
-        shot_maps_data = load_filtered_json_files(directories, "shot_maps", league_display, season_display)
+        country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
-        games_data = games_data[games_data["status"] == "Ended"]
-        games_data = games_data[["season", "round", "game_id", "home_team", "away_team"]]
+        match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
+        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
 
-        shot_maps_data = shot_maps_data[[
-            "season", "round", "game_id", "player_name", "player_position", "is_home", "shot_type", "body_part", "goal_type",
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[["season", "week", "game_id", "home_team", "away_team"]]
+
+        shots_data_df = shots_data_df[[
+            "season", "week", "game_id", "player_name", "player_position", "is_home", "shot_type", "body_part", "goal_type",
             "situation", "goal_mouth_location", "player_coordinates_x", "player_coordinates_y", "time", "added_time"
         ]]
 
-        shot_maps_data = shot_maps_data.merge(
-            games_data,
-            on=["season", "round", "game_id"],
+        shots_data_df = shots_data_df.merge(
+            match_data_df,
+            on=["season", "week", "game_id"],
             how="left"
         )
 
-        shot_maps_data["team_name"] = shot_maps_data.apply(
+        shots_data_df["team_name"] = shots_data_df.apply(
             lambda row: row["home_team"] if row["is_home"] else row["away_team"], axis=1
         )
 
-        shot_maps_data["is_goal"] = shot_maps_data["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
+        shots_data_df["is_goal"] = shots_data_df["shot_type"].apply(lambda x: 1 if x == "goal" else 0)
 
-        shot_maps_data_goals = shot_maps_data[shot_maps_data["is_goal"] == 1]
+        shot_maps_data_goals = shots_data_df[shots_data_df["is_goal"] == 1]
         shot_maps_data_goals = shot_maps_data_goals[shot_maps_data_goals['goal_type'] != "own"]
 
         shot_maps_data_goals["situation"] = shot_maps_data_goals["situation"].replace(change_situations)
@@ -334,7 +336,7 @@ def main(category, subcategory, league, season, league_display, season_display):
                     .melt(id_vars=["team_name"], var_name="is_home", value_name="team_share")
                 )
 
-        last_round = games_data['round'].max()
+        last_round = match_data_df['week'].max()
 
         create_goal_share_plot(
             team_goal_types_df,
