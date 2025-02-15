@@ -193,7 +193,7 @@ def main(league, season, league_display, season_display, plot_type):
         st.error("Uygun veri bulunamadı.")
         st.markdown(
             """
-            <a href="https://github.com/urazakgul/buanalitikfutbol-app/issues" target="_blank" class="error-button">
+            <a href="https://github.com/urazakgul/datafc-web/issues" target="_blank" class="error-button">
                 🛠️ Hata bildir
             </a>
             """,
