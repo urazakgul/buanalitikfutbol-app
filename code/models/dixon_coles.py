@@ -1,17 +1,17 @@
 import streamlit as st
 import numpy as np
 from scipy.stats import poisson
-from scipy.optimize import minimize
+from scipy.optimize import minimize, Bounds
 
 def rho_correction(x, y, lambda_x, mu_y, rho):
     if x == 0 and y == 0:
-        return 1 - (lambda_x * mu_y * rho)
+        return max(1 - lambda_x * mu_y * rho, 1e-10)
     elif x == 0 and y == 1:
-        return 1 + (lambda_x * rho)
+        return 1 + lambda_x * rho
     elif x == 1 and y == 0:
-        return 1 + (mu_y * rho)
+        return 1 + mu_y * rho
     elif x == 1 and y == 1:
-        return 1 - rho
+        return max(1 - rho, 1e-10)
     else:
         return 1.0
 
@@ -21,7 +21,7 @@ def dc_log_like(x, y, alpha_x, beta_x, alpha_y, beta_y, rho, gamma):
     log_lambda_x = np.log(max(poisson.pmf(x, lambda_x), 1e-10))
     log_mu_y = np.log(max(poisson.pmf(y, mu_y), 1e-10))
     return (
-        np.log(rho_correction(x, y, lambda_x, mu_y, rho)) + log_lambda_x + log_mu_y
+        np.log(max(rho_correction(x, y, lambda_x, mu_y, rho), 1e-10)) + log_lambda_x + log_mu_y
     )
 
 def solve_parameters(dataset, init_vals=None, options={"disp": True, "maxiter": 100}, **kwargs):
@@ -61,7 +61,13 @@ def solve_parameters(dataset, init_vals=None, options={"disp": True, "maxiter": 
         return -np.sum(log_likelihoods)
 
     constraints = [{"type": "eq", "fun": lambda x, n=n_teams: sum(x[:n]) - n}]
-    opt_output = minimize(estimate_parameters, init_vals, options=options, constraints=constraints, **kwargs)
+
+    bounds = Bounds(
+        [-np.inf] * n_teams + [-np.inf] * n_teams + [-1, 0],
+        [np.inf] * n_teams + [np.inf] * n_teams + [1, np.inf]
+    )
+
+    opt_output = minimize(estimate_parameters, init_vals, options=options, constraints=constraints, bounds=bounds, **kwargs)
 
     return dict(
         zip(
@@ -89,6 +95,7 @@ def dixon_coles_simulate_match(params_dict, home_team, away_team, max_goals=10):
         for h in range(2)
     ])
     output_matrix[:2, :2] *= correction_matrix
+
     return output_matrix
 
 @st.cache_data(show_spinner=False)

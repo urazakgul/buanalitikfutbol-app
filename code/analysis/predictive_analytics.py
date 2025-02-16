@@ -1,7 +1,3 @@
-from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
-from code.utils.helpers import load_filtered_json_files, add_footer, add_download_button, turkish_english_lower
-from code.models.dixon_coles import solve_parameters_cached, dixon_coles_simulate_match_cached
-from code.models.bradley_terry import solve_bt_ratings_cached, bt_forecast_match_cached
 import os
 import numpy as np
 import pandas as pd
@@ -9,6 +5,11 @@ import streamlit as st
 import seaborn as sns
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from config import PLOT_STYLE, LEAGUE_COUNTRY_LOOKUP
+from code.utils.helpers import load_filtered_json_files, add_footer, add_download_button, turkish_english_lower
+from code.models.dixon_coles import solve_parameters_cached, dixon_coles_simulate_match_cached
+from code.models.bradley_terry import solve_bt_ratings_cached, bt_forecast_match_cached
 
 plt.style.use(PLOT_STYLE)
 
@@ -25,7 +26,8 @@ def create_predictive_analytics_plot(
         max_round_next_day,
         plot_type,
         first_n_goals,
-        bt_prob
+        bt_prob,
+        params=None
 ):
 
     if selected_model == "Dixon-Coles":
@@ -115,6 +117,7 @@ def create_predictive_analytics_plot(
 
             add_footer(fig, x=0.98, y=-0.02, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
             plt.tight_layout()
+
         elif plot_type == "Özet":
             bar_data = []
             for i in range(percentage_matrix.shape[0]):
@@ -182,6 +185,58 @@ def create_predictive_analytics_plot(
 
             add_footer(fig, x=0.98, y=-0.02, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
             plt.tight_layout()
+
+        elif plot_type == "Takım Gücü":
+
+            teams = list(set(
+                k.split("_")[1] for k in params.keys() if "_" in k and (k.startswith("attack_") or k.startswith("defence_"))
+            ))
+            attack_strength = np.array([params.get(f"attack_{team}", 0) for team in teams])
+            defense_strength = np.array([params.get(f"defence_{team}", 0) for team in teams])
+
+            fig, ax = plt.subplots(figsize=(12, 8))
+
+            mean_attack = np.mean(attack_strength)
+            mean_defense = np.mean(defense_strength)
+
+            ax.axvline(mean_attack, color="red", linestyle="dashed", linewidth=1, label="Ortalama Hücum Gücü")
+            ax.axhline(mean_defense, color="blue", linestyle="dashed", linewidth=1, label="Ortalama Savunma Gücü")
+
+            ax.scatter(attack_strength, defense_strength, color="red", s=100, edgecolor="black", alpha=0.7)
+
+            def getImage(path, zoom):
+                return OffsetImage(plt.imread(path), zoom=zoom, alpha=1)
+
+            for team, x, y in zip(teams, attack_strength, defense_strength):
+                logo_path = f"./imgs/team_logo/{team}.png"
+                zoom = 0.3 if team in [home_team, away_team] else 0.15
+                ab = AnnotationBbox(getImage(logo_path, zoom), (x, y), frameon=False)
+                ax.add_artist(ab)
+
+            ax.set_xlabel("Hücum Gücü (daha büyük daha iyi)", labelpad=20, fontsize=12)
+            ax.set_ylabel("Savunma Gücü (daha küçük daha iyi)", labelpad=20, fontsize=12)
+            ax.set_title(
+                f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Hücum ve Savunma Gücü",
+                fontsize=16,
+                fontweight="bold",
+                pad=70
+            )
+
+            home_adv_value = params.get("home_adv", 0) * 100
+            if home_adv_value > 0:
+                home_adv_text = f"Ev sahibi takımın gol beklentisi yaklaşık %{home_adv_value:.1f} oranında artmaktadır."
+            elif home_adv_value < 0:
+                home_adv_text = f"Ev sahibi takımın gol beklentisi yaklaşık %{abs(home_adv_value):.1f} oranında azalmaktadır."
+            else:
+                home_adv_text = ""
+
+            if home_adv_text:
+                ax.text(0.5, 1.12, home_adv_text, ha="center", va="center", fontsize=10, fontstyle="italic", color="gray", transform=ax.transAxes)
+
+            ax.invert_yaxis()
+            ax.grid(True, linestyle="--", alpha=0.7)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.08), ncol=2, frameon=False, fontsize=10)
+            add_footer(fig, x=0.96, y=-0.04, fontsize=8, extra_text=f"{selected_model} sonuçlarıdır.\nGeçmiş {last_round} haftanın verileri kullanılmıştır.")
 
     elif selected_model == "Bradley-Terry":
         fig, ax = plt.subplots(figsize=(12, 10))
@@ -283,7 +338,8 @@ def main(league, season, league_display, season_display, selected_model, selecte
             max_round_next_day,
             plot_type,
             first_n_goals,
-            bt_prob
+            bt_prob,
+            params if selected_model == "Dixon-Coles" and plot_type == "Takım Gücü" else None
         )
 
     except Exception as e:

@@ -93,7 +93,7 @@ def handle_predictive_analytics(team_list, change_situations, change_body_parts,
     if selected_model == "Dixon-Coles":
         plot_type = st.sidebar.radio(
             label="Gösterim Şekli:",
-            options=["Matris", "Sıralı", "Özet"],
+            options=["Matris", "Sıralı", "Özet", "Takım Gücü"],
             index=None,
             label_visibility="hidden"
         )
