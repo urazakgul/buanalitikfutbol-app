@@ -36,7 +36,7 @@ def display_xg_analysis(team_list, change_situations, change_body_parts):
         directories = os.path.join(os.path.dirname(__file__), "../data/sofascore/raw/")
         country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
         match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[["week", "home_team", "away_team"]]
 
         rounds = match_data_df["week"].unique()

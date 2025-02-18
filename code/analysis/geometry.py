@@ -97,7 +97,7 @@ def main(category, league, season, league_display, season_display):
         lineups_data = load_filtered_json_files(directories, country_display, league_display, season_display, "lineups_data")
         substitutions_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "substitutions_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[["tournament","season","week","game_id","home_team","away_team"]]
         coordinates_data_df = coordinates_data_df.groupby(["tournament","season","week","game_id","player_name", "player_id"]).agg({'x': 'mean', 'y': 'mean'}).reset_index()
         lineups_data = lineups_data[["tournament","season","week","game_id","team","player_name", "player_id"]].drop_duplicates()

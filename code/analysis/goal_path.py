@@ -245,7 +245,7 @@ def main(league, season, league_display, season_display, team=None, plot_type=No
         shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
         goal_networks_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "goal_networks_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[["tournament", "season", "week", "game_id", "home_team", "away_team"]]
         match_shots_data_df = merge_match_data(match_data_df, shots_data_df)
         goal_networks_data_df["team_name"] = None

@@ -221,7 +221,7 @@ def main(league, season, league_display, season_display, team, selected_categori
         match_stats_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_stats_data")
         match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
 
         match_stats_data_df["stat_name"] = match_stats_data_df["stat_name"].replace(match_performance_translations)
         match_stats_data_df["group_name"] = match_stats_data_df["group_name"].replace(game_stats_group_name_translations)

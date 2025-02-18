@@ -283,39 +283,24 @@ def main(league, season, league_display, season_display, selected_model, selecte
         country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
 
         match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
-        shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
-
-        shots_data_df = shots_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
-        shots_data_df["team_name"] = shots_data_df.apply(lambda x: x["home_team"] if x["is_home"] else x["away_team"], axis=1)
-
-        goal_counts = (
-            shots_data_df[shots_data_df["shot_type"] == "goal"]
-            .groupby(["game_id", "team_name"])
-            .size()
-            .reset_index(name="goals")
-        )
-        merged = shots_data_df[["game_id", "home_team", "away_team"]].drop_duplicates()
-        merged = merged.merge(
-            goal_counts, left_on=["game_id", "home_team"], right_on=["game_id", "team_name"], how="left"
-        ).rename(columns={"goals": "home_team_goals"}).drop(columns=["team_name"])
-
-        merged = merged.merge(
-            goal_counts, left_on=["game_id", "away_team"], right_on=["game_id", "team_name"], how="left"
-        ).rename(columns={"goals": "away_team_goals"}).drop(columns=["team_name"])
-        merged["home_team_goals"] = merged["home_team_goals"].fillna(0).astype(int)
-        merged["away_team_goals"] = merged["away_team_goals"].fillna(0).astype(int)
-        merged = merged[["game_id", "home_team", "home_team_goals", "away_team", "away_team_goals"]]
+        match_data_df = match_data_df.rename(columns={
+            "home_score_display":"home_team_goals",
+            "away_score_display":"away_team_goals"
+        })
+        match_data_df["home_team_goals"] = pd.to_numeric(match_data_df["home_team_goals"], errors="coerce")
+        match_data_df["away_team_goals"] = pd.to_numeric(match_data_df["away_team_goals"], errors="coerce")
+        match_data_df = match_data_df[["week", "game_id", "home_team", "home_team_goals", "away_team", "away_team_goals", "status"]]
 
         home_team = selected_game.split("-")[0].strip()
         away_team = selected_game.split("-")[1].strip()
 
         if selected_model == "Dixon-Coles":
-            params = solve_parameters_cached(merged)
+            params = solve_parameters_cached(match_data_df)
             model_df = dixon_coles_simulate_match_cached(params, home_team, away_team, max_goals=10)
             bt_prob = None
         elif selected_model == "Bradley-Terry":
-            teams = np.sort(list(set(merged["home_team"].unique()) | set(merged["away_team"].unique())))
-            bt_ratings, team_indices = solve_bt_ratings_cached(merged, teams)
+            teams = np.sort(list(set(match_data_df["home_team"].unique()) | set(match_data_df["away_team"].unique())))
+            bt_ratings, team_indices = solve_bt_ratings_cached(match_data_df, teams)
             bt_prob = bt_forecast_match_cached(bt_ratings, home_team, away_team, team_indices)
             model_df = pd.DataFrame({
                 "Team": list(team_indices.keys()),
@@ -323,7 +308,7 @@ def main(league, season, league_display, season_display, selected_model, selecte
             }).sort_values("Rating", ascending=False)
             model_df["Team"] = model_df["Team"].replace("home_field_advantage", "Ev Sahibi Avantajı")
 
-        last_round = match_data_df[match_data_df["status"] == "Ended"]["week"].max()
+        last_round = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]["week"].max()
 
         create_predictive_analytics_plot(
             model_df,

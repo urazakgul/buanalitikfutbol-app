@@ -59,7 +59,7 @@ def main(league, season, league_display, season_display):
         shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
         standings_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "standings_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
 
         standings_data_df = standings_data_df[standings_data_df["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 

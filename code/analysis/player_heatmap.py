@@ -60,7 +60,7 @@ def main(league, season, league_display, season_display, team, player):
         match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
         heat_maps_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "coordinates_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[['game_id', 'tournament', 'season', 'week', 'home_team', 'away_team']]
 
         hmap_data_df = heat_maps_data_df.merge(

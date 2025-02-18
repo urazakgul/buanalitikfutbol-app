@@ -152,7 +152,7 @@ def main(league, season, league_display, season_display, plot_type):
         shots_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "shots_data")
         standings_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "standings_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
 
         standings_data_df = standings_data_df[standings_data_df["category"] == "Total"][["team_name", "scores_for", "scores_against"]]
 
@@ -163,15 +163,26 @@ def main(league, season, league_display, season_display, plot_type):
         xg_by_team_pivot = xg_by_team.pivot(index="team_name", columns="week", values="total_xg").fillna(0)
         xg_by_team_long = xg_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="week", value_name="total_xg")
 
-        goal_shots = shots_data_df[shots_data_df["shot_type"] == "goal"]
-        goal_shots_by_team = goal_shots.groupby(["team_name", "week"]).size().reset_index(name="goal_count")
-        goal_shots_by_team_pivot = goal_shots_by_team.pivot(index="team_name", columns="week", values="goal_count").fillna(0)
-        goal_shots_by_team_long = goal_shots_by_team_pivot.reset_index().melt(id_vars="team_name", var_name="week", value_name="goal_count")
+        goal_shots_by_team_long = (
+            match_data_df
+            .melt(id_vars=["game_id", "week"], value_vars=["home_team", "away_team"], var_name="team_type", value_name="team")
+            .merge(
+                match_data_df.melt(id_vars=["game_id", "week"], value_vars=["home_score_display", "away_score_display"], var_name="goal_type", value_name="goals"),
+                on=["game_id", "week"]
+            )
+            .query("team_type.str.replace('_team', '') == goal_type.str.replace('_score_display', '')")
+            .groupby(["team", "week"], as_index=False)["goals"].sum()
+            .rename(columns={
+                "team": "team_name",
+                "goals": "week_goal_count"
+            })
+        )
+        goal_shots_by_team_long["week_goal_count"] = pd.to_numeric(goal_shots_by_team_long["week_goal_count"], errors="coerce")
 
         xg_goal_teams = pd.merge(xg_by_team_long, goal_shots_by_team_long, on=["team_name", "week"])
         xg_goal_teams = xg_goal_teams.sort_values(by=["team_name", "week"])
         xg_goal_teams["cumulative_total_xg"] = xg_goal_teams.groupby("team_name")["total_xg"].cumsum()
-        xg_goal_teams["cumulative_goal_count"] = xg_goal_teams.groupby("team_name")["goal_count"].cumsum()
+        xg_goal_teams["cumulative_goal_count"] = xg_goal_teams.groupby("team_name")["week_goal_count"].cumsum()
         xg_goal_teams["cum_goal_xg_diff"] = xg_goal_teams["cumulative_goal_count"] - xg_goal_teams["cumulative_total_xg"]
 
         xg_goal_teams["cumulative_goal_count"] = pd.to_numeric(xg_goal_teams["cumulative_goal_count"], errors="coerce")
@@ -190,7 +201,7 @@ def main(league, season, league_display, season_display, plot_type):
             create_xg_cum_actual_plot(xg_goal_teams, league, season, league_display, season_display, teams, last_round, plot_type="Kümülatif xG ve Gol Farkı (Haftalık Seri)")
 
     except Exception as e:
-        st.error("Uygun veri bulunamadı.")
+        st.error(f"Uygun veri bulunamadı.{e}")
         st.markdown(
             """
             <a href="https://github.com/urazakgul/datafc-web/issues" target="_blank" class="error-button">

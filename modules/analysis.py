@@ -14,7 +14,7 @@ def render_spinner(content_function, *args, **kwargs):
 def load_game_data(directories, league_display, season_display):
     country_display = LEAGUE_COUNTRY_LOOKUP.get(league_display, "unknown")
     match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
-    match_data_df_ended = match_data_df[match_data_df["status"] == "Ended"]
+    match_data_df_ended = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
 
     if not match_data_df_ended.empty:
         max_round = match_data_df_ended["week"].max()

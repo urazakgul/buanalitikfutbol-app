@@ -74,8 +74,10 @@ def handle_player_section(section, team_list, change_situations, change_body_par
         "shots_data" if section == "Şut Lokasyonu" else
         "lineups_data" if section == "Reyting" else None
     )
-    team_data = load_team_data(team, data_type, directories, league_display, season_display)
-    players_list = team_data["player_name"].tolist()
+
+    with st.spinner("Oyuncular yükleniyor..."):
+        team_data = load_team_data(team, data_type, directories, league_display, season_display)
+        players_list = team_data["player_name"].tolist()
 
     selected_player = st.sidebar.selectbox(
         "Oyuncular",

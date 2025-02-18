@@ -93,7 +93,7 @@ def main(league, season, league_display, season_display, team, player):
         match_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "match_data")
         lineups_data_df = load_filtered_json_files(directories, country_display, league_display, season_display, "lineups_data")
 
-        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
+        match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[["tournament","season","week","game_id","home_team","away_team"]]
 
         player_rating_df = match_data_df.merge(
