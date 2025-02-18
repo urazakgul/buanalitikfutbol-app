@@ -290,6 +290,7 @@ def main(league, season, league_display, season_display, selected_model, selecte
         match_data_df["home_team_goals"] = pd.to_numeric(match_data_df["home_team_goals"], errors="coerce")
         match_data_df["away_team_goals"] = pd.to_numeric(match_data_df["away_team_goals"], errors="coerce")
         match_data_df = match_data_df[["week", "game_id", "home_team", "home_team_goals", "away_team", "away_team_goals", "status"]]
+        match_data_df = match_data_df[match_data_df["status"] == "Ended"]
 
         home_team = selected_game.split("-")[0].strip()
         away_team = selected_game.split("-")[1].strip()
