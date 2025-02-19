@@ -22,6 +22,17 @@ def handle_goal_path(team_list, change_situations, change_body_parts):
         st.warning("Lütfen bir takım seçin.")
         return
 
+    side = st.sidebar.radio(
+        label="Attığı-Yediği:",
+        options=["Attığı","Yediği"],
+        index=None,
+        label_visibility="hidden"
+    )
+
+    if side is None:
+        st.warning("Lütfen bir taraf seçin.")
+        return
+
     plot_type = st.sidebar.radio(
         label="Harita Tipi:",
         options=["Birleştir","Ayrıştır"],
@@ -40,7 +51,8 @@ def handle_goal_path(team_list, change_situations, change_body_parts):
         league_display,
         season_display,
         team,
-        plot_type
+        plot_type,
+        side
     )
 
 def handle_shot_location(team_list, change_situations, change_body_parts):

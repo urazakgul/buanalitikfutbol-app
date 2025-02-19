@@ -12,6 +12,10 @@ def fill_team_name(df):
     df["team_name"] = df.groupby("id")["team_name"].transform(lambda x: x.ffill().bfill())
     return df
 
+def fill_opponent_team_name(df):
+    df["opponent_team_name"] = df.groupby("id")["opponent_team_name"].transform(lambda x: x.ffill().bfill())
+    return df
+
 def merge_match_data(match_data_df, shots_data_df):
     filtered_shots = shots_data_df[shots_data_df["shot_type"] == "goal"][[
         "tournament", "season", "week", "game_id", "player_name", "is_home", "goal_type", "xg"
@@ -19,7 +23,7 @@ def merge_match_data(match_data_df, shots_data_df):
     merged_df = match_data_df.merge(filtered_shots, on=["tournament", "season", "week", "game_id"])
     return merged_df[~merged_df["goal_type"].isin(["penalty", "own"])]
 
-def create_goal_network_plot(team_data, league, season, league_display, season_display, team, last_round, plot_type):
+def create_goal_network_plot(side_data, league, season, league_display, season_display, team, last_round, plot_type, side):
     if plot_type == "Birleştir":
         pitch = VerticalPitch(
             pitch_type="opta",
@@ -36,7 +40,7 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
         for y in [33, 66]:
             ax.hlines(y=y, xmin=0, xmax=100, color="black", linestyle="-", lw=1, alpha=0.5)
 
-        kde_data = team_data[team_data["event_type"] != "Gol"]
+        kde_data = side_data[side_data["event_type"] != "Gol"]
         pitch.kdeplot(
             kde_data["player_x"],
             kde_data["player_y"],
@@ -48,7 +52,7 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
             zorder=0
         )
 
-        for _, row in team_data.iterrows():
+        for _, row in side_data.iterrows():
             color = event_colors.get(row["event_type"], "black")
             pitch.scatter(
                 row["player_x"],
@@ -61,7 +65,7 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
                 zorder=2
             )
 
-        for _, group in team_data.groupby("id"):
+        for _, group in side_data.groupby("id"):
             pitch.lines(
                 group["player_x"][:-1],
                 group["player_y"][:-1],
@@ -87,8 +91,8 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
         )
 
         ax.set_title(
-            f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları ve Etkin Olduğu Alanlar",
-            fontsize=12,
+            f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları ve Etkin Olduğu Alanlar (Takımın {side})",
+            fontsize=10,
             fontweight="bold",
             pad=40
         )
@@ -109,10 +113,10 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
             fontstyle="italic",
             color="gray"
         )
-        file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(team)}_gol_aglari_ve_etkin_oldugu_alanlar.png"
+        file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(team)}_gol_aglari_ve_etkin_oldugu_alanlar_{turkish_english_lower(side)}.png"
     elif plot_type == "Ayrıştır":
         all_rounds = list(range(1, last_round + 1))
-        existing_rounds = sorted(team_data["week"].unique())
+        existing_rounds = sorted(side_data["week"].unique())
         missing_rounds = set(all_rounds) - set(existing_rounds)
 
         for missing_round in missing_rounds:
@@ -123,9 +127,9 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
                 "event_type": ["Veri Yok"],
                 "id": [None]
             })
-            team_data = pd.concat([team_data, empty_data], ignore_index=True)
+            side_data = pd.concat([side_data, empty_data], ignore_index=True)
 
-        rounds = sorted(team_data["week"].unique())
+        rounds = sorted(side_data["week"].unique())
 
         n_cols = 5
         n_rows = -(-len(rounds) // n_cols)
@@ -139,7 +143,7 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
         axes = axes.flatten()
 
         for i, round_num in enumerate(rounds):
-            round_data = team_data[team_data["week"] == round_num]
+            round_data = side_data[side_data["week"] == round_num]
             ax = axes[i]
             pitch = VerticalPitch(
                 pitch_type="opta",
@@ -205,7 +209,7 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
         )
 
         fig.suptitle(
-            f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları",
+            f"{league} {season} Sezonu Geçmiş {last_round} Haftada Takımların Gol Ağları (Takımın {side})",
             fontsize=16,
             fontweight="bold",
             y=0.96
@@ -229,12 +233,12 @@ def create_goal_network_plot(team_data, league, season, league_display, season_d
             color="gray"
         )
 
-        file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(team)}_gol_aglari.png"
+        file_name = f"{league_display}_{season_display}_{last_round}_{turkish_english_lower(team)}_gol_aglari_{turkish_english_lower(side)}.png"
 
     st.markdown(add_download_button(fig, file_name=file_name), unsafe_allow_html=True)
     st.pyplot(fig)
 
-def main(league, season, league_display, season_display, team=None, plot_type=None):
+def main(league, season, league_display, season_display, team=None, plot_type=None, side=None):
     try:
 
         directories = os.path.join(os.path.dirname(__file__), "../../data/sofascore/raw/")
@@ -248,19 +252,31 @@ def main(league, season, league_display, season_display, team=None, plot_type=No
         match_data_df = match_data_df[match_data_df["status"].isin(["Ended","Retired"])]
         match_data_df = match_data_df[["tournament", "season", "week", "game_id", "home_team", "away_team"]]
         match_shots_data_df = merge_match_data(match_data_df, shots_data_df)
+
         goal_networks_data_df["team_name"] = None
+        goal_networks_data_df["opponent_team_name"] = None
 
         for game_id in match_shots_data_df["game_id"].unique():
             match_data = match_shots_data_df[match_shots_data_df["game_id"] == game_id]
             for _, row in match_data.iterrows():
                 team_name = row["home_team"] if row["is_home"] else row["away_team"]
+                opponent_team_name = row["away_team"] if row["is_home"] else row["home_team"]
+
                 goal_networks_data_df.loc[
                     (goal_networks_data_df["game_id"] == game_id) &
                     (goal_networks_data_df["player_name"] == row["player_name"]) &
                     (goal_networks_data_df["event_type"] == "goal"), "team_name"
                 ] = team_name
 
+                goal_networks_data_df.loc[
+                    (goal_networks_data_df["game_id"] == game_id) &
+                    (goal_networks_data_df["player_name"] == row["player_name"]) &
+                    (goal_networks_data_df["event_type"] == "goal"), "opponent_team_name"
+                ] = opponent_team_name
+
         goal_networks_data_df = fill_team_name(goal_networks_data_df)
+        goal_networks_data_df = fill_opponent_team_name(goal_networks_data_df)
+
         for _, group in goal_networks_data_df.groupby("id"):
             if (group["event_type"] == "goal").any() and group.loc[group["event_type"] == "goal", "goal_shot_x"].iloc[0] != 100:
                 goal_networks_data_df.loc[group.index, ["player_x", "player_y"]] = 100 - group[["player_x", "player_y"]]
@@ -268,11 +284,14 @@ def main(league, season, league_display, season_display, team=None, plot_type=No
         goal_networks_data_df = goal_networks_data_df.merge(match_data_df, on=["tournament", "season", "week", "game_id"])
         goal_networks_data_df["event_type"] = goal_networks_data_df["event_type"].replace(event_type_translations)
 
-        team_data = goal_networks_data_df[goal_networks_data_df["team_name"] == team]
+        if side == "Attığı":
+            side_data = goal_networks_data_df[goal_networks_data_df["team_name"] == team]
+        elif side == "Yediği":
+            side_data = goal_networks_data_df[goal_networks_data_df["opponent_team_name"] == team]
 
         last_round = match_data_df['week'].max()
 
-        create_goal_network_plot(team_data, league, season, league_display, season_display, team, last_round, plot_type)
+        create_goal_network_plot(side_data, league, season, league_display, season_display, team, last_round, plot_type, side)
 
     except Exception as e:
         st.error(f"Uygun veri bulunamadı.{e}")
